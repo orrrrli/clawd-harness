@@ -19,10 +19,10 @@ Phase 0  Resolve  → Story# + ordered list of its open Task sub-issues; set up 
 FOR each Task (in dependency order):
     Phase 1  Explore   (no stop gate — report and continue)
     Phase 2  Propose   ⏸ STOP: wait for OK before writing code
-    Phase 2.5 Tests    → test-writer turns the AC into failing tests; they become read-only
+    Phase 2.5 Tests    → test-writer turns the AC into failing tests; commit them red, then read-only
     Phase 3  Apply     → Apply with ponytail principles (laziest solution that works)
     Phase 4  Verify    → spec-verify (code-reviewer) [+ security-auditor]; on failure STOP the Story
-    Phase 4.5 Commit   (one conventional commit per task)
+    Phase 4.5 Commit   (the implementation commit; tests were committed in 2.5)
     Phase 5  Archive   (comment + close the Task issue)
 Phase 5.5 Slice   → fullstack Stories only: spec-verify on the whole Story; on failure STOP
 Phase 6  Finish   → push the Story branch and open one PR for the Story
@@ -243,7 +243,14 @@ agent that does not implement.
      code or an error shape the backend does not return.
 2. Check the reasons: a test red for the wrong reason (typo, broken fixture) goes back
    to `test-writer` once.
-3. Stage the test files (`git add <test files>`). From here they are read-only for Phase 3.
+3. Commit the red tests, then continue to Phase 3:
+   ```bash
+   git add <test files>
+   git commit -m "test(<TASK_ID>): Add failing tests for <behavior>"
+   ```
+   Record the SHA as `<test-sha>`. From here the tests are read-only for Phase 3. Same commit
+   rules as Phase 4.5. The commit stays even if the Story later stops: the next session starts
+   from those tests.
 
 ---
 
@@ -290,9 +297,10 @@ not write the code.
    - [ ] Phase 2.5 tests are green and untouched (`git diff -- <test files>` is empty)
    - [ ] No files outside Phase 2 + 2.5 scope were modified
 2. **Independent review**, uncommitted, in ONE message so they run concurrently:
-   - Invoke the `spec-verify` skill with `<TASK_ID>`. It runs in a fresh `code-reviewer` subagent,
-     reads the Story's AC from GitHub, reviews the uncommitted diff, runs the tests, and returns
-     PASS/FAIL per criterion.
+   - Invoke the `spec-verify` skill with `<TASK_ID> --since <test-sha>~1`. It runs in a fresh
+     `code-reviewer` subagent, reads the Story's AC from GitHub, reviews the test commit plus the
+     uncommitted implementation, runs the tests, and returns PASS/FAIL per criterion. A task that
+     skipped Phase 2.5 has no `<test-sha>`: pass only `<TASK_ID>`.
    - **Also** dispatch `security-auditor` when the diff touches auth, sessions/tokens, permissions,
      payments, webhooks, or untrusted input. Its prompt must stand alone: the Story's AC verbatim,
      the diff command (`git diff HEAD`), and the paths to `CLAUDE.md` and `engineering/standards.md`.
@@ -301,18 +309,19 @@ not write the code.
 
 **Failure policy:** If `spec-verify` returns FAIL or the security-auditor reports a critical/high
 issue, make **one** attempt to fix it in Phase 3 and verify again. If it still fails, **STOP the
-entire Story** here — do NOT commit the failing task, leave
-already-committed tasks in place, and report: which task failed, why, and what's left. Do not move on
+entire Story** here — do NOT commit the failing implementation, leave
+already-committed tasks and this task's test commit in place, and report: which task failed, why, and what's left. Do not move on
 to the next task.
 
 ---
 
 ## Phase 4.5 — Commit
 
-**Goal:** One commit per task, only after Verify passes.
+**Goal:** The task's implementation commit, only after Verify passes. Each task has two commits:
+the red tests from Phase 2.5, then this one. A task that skipped Phase 2.5 has only this one.
 
 ```bash
-git add <files from Phase 2 + 2.5 scope>
+git add <files from Phase 2 scope>
 git commit -m "<type>(<TASK_ID>): <Imperative summary>"
 # e.g. feat(BE-FOUND-1-T1): Scaffold Go module layout
 ```
@@ -326,7 +335,8 @@ Rules:
   Phase 5 with `gh issue close`, and the Story PR body lists `Closes #<task#>`, so the commit needs
   no `Closes` line.
 - **Do NOT add any Claude/AI co-author trailer** (no `Co-Authored-By: Claude`). Author is the user only.
-- Commit **only** the files this task changed (they should match Phase 2 + 2.5 scope).
+- Commit **only** the files this task changed (they should match Phase 2 scope; the tests are
+  already committed and must not appear in this commit).
 
 ---
 
@@ -336,7 +346,7 @@ Rules:
 
 1. Comment on the Task issue with a brief summary of what was implemented:
    ```bash
-   gh issue comment <task#> --repo <owner/repo> --body "Implemented: <one-line summary>. Commit: <sha>. Files changed: <list>. Minor review notes: <list or none>."
+   gh issue comment <task#> --repo <owner/repo> --body "Implemented: <one-line summary>. Commits: <test-sha>, <sha>. Files changed: <list>. Minor review notes: <list or none>."
    ```
 
 2. Close the task issue:
@@ -401,7 +411,7 @@ Skip this phase for a Story that is not `fullstack`, or when the run covered a s
 - **Always read the project context** (Phase 1, step 4). Do not skip because the task "looks simple."
   This ensures code conforms to domain rules, business constraints, and engineering standards.
 - **Work task-by-task inside the Story** — full Explore→Verify→Commit→Archive per task before moving
-  on. Never batch multiple tasks into one commit.
+  on. Never batch multiple tasks into one commit. Tests commit first, red; implementation second.
 - **The Propose gate is per task:** stop and wait for approval before writing code for each task.
 - **Tests are written before the code, by `test-writer`** (Phase 2.5), and Phase 3 never
   edits them.

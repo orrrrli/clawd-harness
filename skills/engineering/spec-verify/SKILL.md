@@ -54,7 +54,10 @@ git diff HEAD                  # uncommitted: the task in progress
 git diff <BASE>...HEAD         # committed on this branch
 ```
 
-If the working tree has changes, review those (the current task). If it is
+If `$ARGUMENTS` carries `--since <sha>`, review `git diff <sha>`: everything
+committed after that SHA plus the uncommitted work (spec-apply passes the commit
+before a task's red tests, so the tests are reviewed with their implementation).
+Otherwise, if the working tree has changes, review those (the current task). If it is
 clean, review `<BASE>...HEAD`. Read every changed file in full, not only the hunks.
 
 **In scope** = the lines that implement this Story/Task. If the diff also carries
