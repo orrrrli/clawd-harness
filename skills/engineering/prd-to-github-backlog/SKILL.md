@@ -48,8 +48,8 @@ Write `manifest.json` per `references/manifest-schema.md`. Methodology:
 
 - **Epics by feature / FR**, each tagged with its `phase` and a `size` (S/M/L) and `sprint`.
 - Each feature epic gets **vertical-slice `fullstack` stories** (`FS-<EPIC>-<n>`): one story carries the
-  API and the UI for one user-visible behavior, so `spec-apply` builds both in one session and one PR,
-  writing the frontend against the real endpoint. Never split a feature into a backend story and a
+  API and the UI for one user-visible behavior, so `spec-apply` builds both in one cycle and one PR,
+  with the frontend and backend following the same approved contract. Never split a feature into a backend story and a
   frontend story. Give each task its own `area` (`backend` tasks first, then `frontend`). A slice
   bigger than L is split into thinner slices (email login, then OAuth), never by layer.
   Use `backend`/`frontend` stories only for work with no other side (foundation, a job, a pure UI

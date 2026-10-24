@@ -11,7 +11,7 @@ Code-specific skills: architecture audits, spec-driven delivery, testing and deb
 - **[prd-to-github-backlog](./prd-to-github-backlog/SKILL.md)** — Turn a PRD/spec into a GitHub Project with a full engineering backlog: epics → story sub-issues → task sub-issues, organized by phase and sprint.
 - **[project-bootstrap](./project-bootstrap/SKILL.md)** — Scaffold a brand-new full-stack project in one pass: a working skeleton plus exactly one vertical slice implemented end-to-end.
 - **[prompt-rewrite](./prompt-rewrite/SKILL.md)** — Audit or rewrite LLM instructions (a skill, CLAUDE.md, agent definition, system prompt, tool description or a single prompt) against Anthropic's prompting guidance for current Claude models.
-- **[spec-apply](./spec-apply/SKILL.md)** — Implement a GitHub Story and all its Task sub-issues using a spec-driven loop: the AC become failing tests written by test-writer, then ponytail code makes them pass.
+- **[spec-apply](./spec-apply/SKILL.md)** — Implement a GitHub Story across every layer it touches in one spec-driven cycle, its Task sub-issues as the checklist: the AC become failing tests written by test-writer, then ponytail code makes them pass.
 - **[spec-verify](./spec-verify/SKILL.md)** — Verify an implementation against its Story's acceptance criteria and the code-quality spec, in a fresh code-reviewer subagent, with a mutation check that proves each test catches a fault.
 - **[tdd](./tdd/SKILL.md)** — Test-driven development with red-green-refactor loop.
 - **[write-swift](./write-swift/SKILL.md)** — Modern Swift: value types, Swift 6 concurrency, some vs any, API design, performance, Swift Testing. Vendored from emilkowalski/skills; its license ships in the folder.

@@ -56,8 +56,8 @@ git diff <BASE>...HEAD         # committed on this branch
 
 If `$ARGUMENTS` carries `--since <sha>`, review `git diff <sha>`: everything
 committed after that SHA plus the uncommitted work (spec-apply passes the commit
-before a task's red tests, so the tests are reviewed with their implementation).
-Otherwise, if the working tree has changes, review those (the current task). If it is
+before the Story's red tests, so the tests are reviewed with their implementation).
+Otherwise, if the working tree has changes, review those (the work in progress). If it is
 clean, review `<BASE>...HEAD`. Read every changed file in full, not only the hunks.
 
 **In scope** = the lines that implement this Story/Task. If the diff also carries
@@ -68,14 +68,8 @@ Judge an in-scope line by what it does to the product, not only against the AC.
 If it breaks behavior that worked on the base, or leaves the Story's feature
 unreachable from the product's real entry points (API, UI), it is [blocking]
 even when every criterion passes as written. The missing piece may live outside
-the diff; the in-scope line that depends on it is what blocks.
-
-Exception for a Task of a `fullstack` Story (`FS-` ID): the UI is built by the
-Story's later `area:frontend` Tasks. If any of them are still open
-(`gh api repos/<owner/repo>/issues/<story#>/sub_issues`), a feature not yet
-reachable from the UI is not blocking; it must still be reachable from the API.
-A Story-level run (Story ID) gets no exception: the whole slice must work from
-the UI against the real backend.
+the diff; the in-scope line that depends on it is what blocks. A `fullstack`
+Story (`FS-` ID) must work from the UI against the real backend.
 
 ## 3. Load the project's rules
 

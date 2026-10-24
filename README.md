@@ -88,7 +88,7 @@ The **Origin** column is detailed in [Credits and sources](#credits-and-sources)
 
 | Skill | Stacks | What it does | Origin |
 |-------|--------|--------------|--------|
-| **spec-apply** | all | Implements a GitHub Story and its Tasks: explore, propose, failing tests, apply, verify, commit, PR | Own |
+| **spec-apply** | all | Implements a GitHub Story across every layer in one cycle (its Tasks are the checklist): explore, propose, failing tests, apply, verify, commit, PR | Own |
 | **spec-verify** | all | Checks an implementation against its acceptance criteria in a fresh code-reviewer, with a mutation check | Own |
 | **prd-to-github-backlog** | all | PRD to GitHub Project: epics, stories, tasks, sprints, estimates | Own |
 | **fill-context** | all | Scans the codebase and interviews you to write the `.claude/` context tree | Own |
@@ -117,23 +117,28 @@ writes the code does not own them.
 
 ```
 Story AC (Given/When/Then, approved)          business-analyst drafts them if missing
-  -> Propose     plan + responsibilities + one behavior line per AC     STOP for approval
-  -> Tests       test-writer turns the AC into failing tests, then they are staged read-only
+  -> Propose     one plan for every layer + the contract + one behavior line per AC   STOP for approval
+  -> Tests       test-writer turns the AC into failing tests, committed red and read-only
   -> Apply       the implementer makes those tests pass (ponytail ladder), never edits them
   -> Verify      spec-verify reruns the tests and breaks each AC's line to prove its test fails
 ```
 
+One Story is one cycle across db, backend and frontend. Its Task sub-issues are the checklist
+the plan must cover, and are closed together at the end. An XL Story stops before any code
+with a proposed split into thinner slices, since the Story's size is the size of the diff
+spec-verify reviews.
+
 1. **Tests come from the AC, not the code.** `test-writer` sees the AC and the approved
    interface, never an implementation, so expected values cannot copy what the code returns.
    It adds only a not-implemented stub when the interface does not exist yet.
-2. **The implementer cannot buy a green run.** The tests are staged after the Tests phase;
+2. **The implementer cannot buy a green run.** The tests are committed after the Tests phase;
    Verify fails if `git diff` shows them changed. A test that looks wrong stops the run and
    goes to you, since it usually means an ambiguous AC.
 3. **Propose names responsibilities.** Each one (business rule, persistence, security,
    external call, presentation) gets a place: an existing component, a new one with a reason,
    or a framework capability. This is what stops a credential check written as a bare `if`.
 4. **Passing is not enough.** For each AC, `spec-verify` breaks the implementing line once in
-   a scratch worktree. A test that stays green marks the AC `~ PARTIAL`, and the task fails.
+   a scratch worktree. A test that stays green marks the AC `~ PARTIAL`, and the Story fails.
 
 Tasks with no testable behavior (config, scaffolding) say so in Propose and skip the Tests
 phase. `tdd` stays a separate skill for test-first work outside a Story.
