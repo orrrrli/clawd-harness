@@ -136,11 +136,16 @@ Resolve via the **manifest as a cache, verified against the live board** (the ch
    ```bash
    gh issue view <story#> --repo <owner/repo> --json body --jq '.body'
    ```
-   Testable means Given/When/Then with an observable outcome. If they are present and testable,
-   continue. If they are missing or untestable (e.g. "works well", "good UX"):
+   Testable means Given/When/Then with an observable outcome. A `fullstack` Story also needs at
+   least one criterion the user observes in the UI ("Then sees the dashboard", not only "Then
+   returns 200"): without it the frontend has nothing to be verified against. If they are present
+   and testable, continue. If they are missing or untestable (e.g. "works well", "good UX"), or a
+   `fullstack` Story has no UI-observable criterion:
    - Dispatch `business-analyst`. It cannot see this conversation or run `gh`, so the prompt
      carries the Story body and the Epic body verbatim, plus the paths to `CLAUDE.md` and
      `business/rules.md`. Ask for Given/When/Then criteria returned in the report, no files written.
+     For a `fullstack` Story, say it is a vertical slice and ask for at least one criterion
+     observable in the UI.
    - Show them to the user. **STOP** and wait for approval or edits.
    - Once approved, append them to the Story under `## Acceptance criteria` so `spec-verify` reads
      the same ones:
@@ -226,6 +231,10 @@ Produce one implementation plan, with a section per layer touched (db, backend, 
   cover is named here with the reason.
 - Behaviors to test: one line per AC. A Story with no testable behavior (config, scaffolding)
   says so here and skips Phase 2.5.
+- End-to-end test (`fullstack` Stories): which UI-observable criterion it covers, and the
+  project's e2e runner from `engineering/testing.md` (Playwright, Cypress, …). If the project
+  has none, say so here: adding one is a new dependency, so the user decides between adding it
+  and shipping the Story without an e2e test.
 
 **Exit gate:** Present the plan. STOP and wait for explicit user confirmation before writing any code.
 
@@ -244,6 +253,9 @@ agent that does not implement.
    - Derive every expected value from the AC, never from existing code.
    - Build frontend API mocks and fixtures from the approved contract: same fields, status
      codes and error shape. Never invent one the contract does not have.
+   - For a `fullstack` Story, write the end-to-end test approved in Phase 2: through the UI,
+     against the real backend and database, no API mocks, with the project's e2e runner. It
+     stays in the suite, so the slice keeps a test after merge.
    - If the interface does not exist yet, add only a signature stub from Phase 2 that
      throws not-implemented. No logic.
    - Run the tests and report each one RED with its failure reason.
