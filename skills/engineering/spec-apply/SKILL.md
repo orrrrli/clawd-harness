@@ -24,6 +24,7 @@ FOR each Task (in dependency order):
     Phase 4  Verify    → spec-verify (code-reviewer) [+ security-auditor]; on failure STOP the Story
     Phase 4.5 Commit   (one conventional commit per task)
     Phase 5  Archive   (comment + close the Task issue)
+Phase 5.5 Slice   → fullstack Stories only: spec-verify on the whole Story; on failure STOP
 Phase 6  Finish   → push the Story branch and open one PR for the Story
 ```
 
@@ -235,6 +236,11 @@ agent that does not implement.
    - If the interface does not exist yet, add only a signature stub from Phase 2 that
      throws not-implemented. No logic.
    - Run the tests and report each one RED with its failure reason.
+   - For an `area:frontend` task of a `fullstack` Story, add to the prompt the files of the
+     contract the Story's backend tasks committed (DTOs, response types, route), with paths.
+     API mocks and fixtures import the shared types when the frontend can reach them;
+     otherwise they copy the fields from those files exactly. Never invent a field, a status
+     code or an error shape the backend does not return.
 2. Check the reasons: a test red for the wrong reason (typo, broken fixture) goes back
    to `test-writer` once.
 3. Stage the test files (`git add <test files>`). From here they are read-only for Phase 3.
@@ -339,7 +345,23 @@ Rules:
    ```
 
 3. **Advance:** if more tasks remain in the Phase 0 list, return to Phase 1 for the next task.
-   Otherwise continue to Phase 6.
+   Otherwise continue to Phase 5.5.
+
+---
+
+## Phase 5.5 — Verify the slice (fullstack Stories)
+
+**Goal:** Prove the whole Story works end to end, not only task by task. Per-task reviews never
+see the frontend running against the real backend.
+
+Skip this phase for a Story that is not `fullstack`, or when the run covered a single task.
+
+1. Invoke the `spec-verify` skill with `<STORY_ID>`. The tree is clean, so it reviews
+   `<BASE>...HEAD` against every criterion of the Story, including the browser check against the
+   real backend on web projects.
+2. Apply the Phase 4 failure policy: on FAIL, one fix attempt, committed as
+   `fix(<STORY_ID>): <summary>`, then verify again. If it still fails, STOP before Phase 6 and
+   report what fails.
 
 ---
 
