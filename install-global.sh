@@ -43,6 +43,7 @@ grep -qx '@behavior.md' "$CLAUDE_DIR/CLAUDE.md" 2>/dev/null \
 # 2. Skills available in every session, not only in init'ed projects.
 #    A real directory with the same name is left alone (it is not ours to replace).
 GLOBAL_SKILLS=(
+    engineering/context-sync
     engineering/fill-context
     engineering/prd-to-github-backlog
     engineering/prompt-rewrite
