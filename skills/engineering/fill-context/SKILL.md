@@ -7,7 +7,7 @@ description: >
   multi-file context structure (business, architecture, domains, engineering) with
   the root CLAUDE.md as the index. Use after project init or whenever context is
   missing, stale, or incomplete.
-version: "3.0.0"
+version: "3.1.0"
 modes: [architect]
 ---
 
@@ -31,6 +31,20 @@ auto-loaded by anything: they are plain markdown that Claude opens when a task
 leads it there. That is the point — cheap index always present, detail read on
 demand.
 
+**Four places, four load times.** Every fact goes to exactly one (source: the
+Claude Code docs, `code.claude.com/docs/en/memory`, `/best-practices`, `/skills`):
+
+| Where | Loads | Put here |
+|---|---|---|
+| Root `CLAUDE.md` | Every session, whole file | What applies to every task: routing, commands Claude can't guess, repo etiquette. Under 200 lines ("Longer files consume more context and reduce adherence") |
+| `.claude/rules/<area>.md` with `paths:` | When Claude reads or edits a matching file | Conventions and code traps tied to one kind of file (Kotlin services, Swift views, migrations). A link can be skipped; a rule cannot |
+| Linked `.claude/**/*.md` | Only when Claude opens it | Reference: business, domains, architecture, environments |
+| `.claude/skills/<name>/` | Description every turn, body on invocation | Procedures: multi-step workflows (deploy, verify, sync). Suggest them, don't generate them here |
+
+`@imports` are not a fifth place: an imported file loads with the file that
+imports it, so it saves nothing. A rule without `paths:` loads at launch like
+`CLAUDE.md`; only write one when it truly applies to every task.
+
 **Output structure:**
 ```
 CLAUDE.md                    # Main index — auto-loaded every session, at the repo root
@@ -44,26 +58,40 @@ CLAUDE.md                    # Main index — auto-loaded every session, at the 
 │   └── integrations.md      # External services and APIs
 ├── domains/
 │   └── [entity].md          # One file per main domain entity
-└── engineering/
-    ├── standards.md         # Coding conventions and patterns
-    └── testing.md           # Test strategy, commands, full-stack start, e2e
+├── engineering/
+│   ├── standards.md         # Cross-cutting conventions (branches, PRs, comments)
+│   └── testing.md           # Test strategy, commands, full-stack start, e2e
+└── rules/
+    └── [area].md            # Path-scoped conventions, only when Phase 2 finds some
 ```
 
 ---
 
 ## Phase 1 — Scan the Codebase
 
-Run all scans silently. Do NOT report findings yet — collect data to populate every file above.
+Dispatch the scan to an `Explore` subagent ("very thorough") and keep only its
+report: reading manifests, schemas and configs in the main session fills the
+context before any file is written (best-practices: "use subagents to
+investigate"). The prompt asks for every item in "From the scan, extract" below,
+each with the file it came from, and runs the checks in 1.1 to 1.7. Do NOT report
+findings to the developer yet.
 
 ### 1.1 Framework and stack
-```bash
-cat package.json 2>/dev/null || cat pyproject.toml 2>/dev/null || cat *.csproj 2>/dev/null | head -60
-```
+Read whichever manifests exist; no stack is assumed:
+- JS/TS: `package.json` · Python: `pyproject.toml` · .NET: `*.csproj`, `*.sln` · Go: `go.mod`
+- JVM: `build.gradle.kts`, `build.gradle`, `settings.gradle.kts`, `pom.xml`
+- iOS: `Package.swift`, `project.yml` (XcodeGen), `*.xcodeproj` · Android: `app/build.gradle.kts`
+
+**Several repos under one folder** (each subfolder has its own `.git`, the root has
+none): this is a hub. Scan each repo, note which ones already carry a team
+`CLAUDE.md` / `AGENTS.md`, and ask in Phase 2 whether those are read-only. Local
+knowledge then goes in the hub's `.claude/`, and rule `paths` are written from
+the hub root (`api/backend/**/*.kt`).
 
 ### 1.2 Directory structure
-```bash
-eza --tree --level=3 --ignore-glob="node_modules|.git|.next|dist|build|coverage" 2>/dev/null || find . -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/.next/*' -maxdepth 3 -type d
-```
+Use Glob, or `ls` level by level. Never `eza`, `fd` or `bat`: the rtk hook does not
+compact them, so their full output lands in context. Skip `node_modules`, `.git`,
+`.next`, `dist`, `build`, `DerivedData`, `coverage`.
 
 ### 1.3 Domain entities (schema + models)
 ```bash
@@ -83,22 +111,28 @@ cat CLAUDE.md 2>/dev/null && ls .claude/ 2>/dev/null
 ```
 
 ### 1.6 Engineering conventions
-```bash
-cat .eslintrc* 2>/dev/null | head -30
-cat jest.config* 2>/dev/null | head -20
-cat vitest.config* 2>/dev/null | head -20
-cat tsconfig.json 2>/dev/null | head -30
-```
+Linter, formatter and test configs for the detected stack: `.eslintrc*`,
+`tsconfig.json`, `jest.config*` / `vitest.config*`, `.editorconfig`, `detekt.yml`,
+`.swiftlint.yml`, `Directory.Build.props`. Only rules that differ from the
+language defaults matter.
+
+### 1.7 Instruction files already loading
+List every `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md` and `.claude/rules/` under the
+root. Flag the ones from vendored code (`node_modules/`, `build/`,
+`SourcePackages/checkouts/`, `Pods/`, `vendor/`): Claude loads a subdirectory
+`CLAUDE.md` once it reads a file there, so they go in `claudeMdExcludes` (Phase 4).
 
 From the scan, extract:
-- **App name** — from `package.json` or README
+- **App name** — from the manifest or README
 - **Framework + version** — Next.js, .NET, Django, etc.
 - **Database, backend, ORM** — from deps and schema files
-- **Key integrations** — from `package.json` deps (Stripe, Resend, Supabase…)
+- **Key integrations** — from the manifest deps (Stripe, Resend, Supabase…)
 - **Domain entities** — model/schema names → these become `domains/*.md` files
 - **Directory conventions + architecture pattern** — from file structure
-- **Test framework and run commands** — from `package.json` scripts and config files
-- **Coding conventions** — from ESLint, tsconfig, file naming patterns
+- **Test framework and run commands** — from manifest scripts, Gradle tasks, schemes and config files
+- **Coding conventions** — from linter configs and file naming patterns, each
+  tagged with the file glob it applies to, or "all" (this decides rule vs `standards.md`)
+- **Instruction files** — from 1.7, with the vendored ones marked
 
 ---
 
@@ -116,6 +150,9 @@ Then ask ONLY these questions (all at once, numbered):
 2. **Business rules** — What are the 2-3 rules the code must NEVER break? (e.g., "Users cannot access other accounts' data", "Soft deletes only, never hard deletes")
 3. **Domain vocabulary** — Are any entity names in the code different from how the business talks about them? (e.g., "`User` in code = `Client` in the business")
 4. **Domain context** — For each entity detected, what is its core responsibility in one sentence? (Skip any that are self-evident)
+
+In a hub (1.1), question 2 also asks: "Are the repos' own `CLAUDE.md` / `AGENTS.md` team
+files I must not edit?" It stays one question, so the limit of 4 holds.
 
 Wait for the developer's answers before proceeding to Phase 3.
 
@@ -161,7 +198,13 @@ generate it fresh with this shape:
 ## Engineering
 - [Standards](.claude/engineering/standards.md) — Coding conventions and patterns
 - [Testing](.claude/engineering/testing.md) — Test strategy, commands, full-stack start, e2e
+
+## Rules
+Path-scoped conventions in `.claude/rules/` load on their own when a matching file is read or
+edited. A new convention for one kind of file goes in the rule for that file type.
 ```
+
+Omit the `## Rules` section when no rule was written.
 
 Note all links are relative to the repo root (`.claude/business/...`), not to `.claude/` itself.
 
@@ -270,6 +313,26 @@ Note all links are relative to the repo root (`.claude/business/...`), not to `.
 
 ---
 
+### `rules/[area].md` — one per file type that has its own conventions
+
+Only for conventions that apply to one kind of file. Name it after the area
+(`api.md`, `ios-views.md`, `migrations.md`). Do not link rules from the root
+`CLAUDE.md`: they load on their own; one line in the index saying the folder exists
+is enough.
+
+```markdown
+---
+paths:
+  - "[glob from the scan, e.g. src/api/**/*.ts]"
+---
+
+# [Area] conventions
+
+- **[Rule]:** [what to do, and the concrete reason or the bug it prevents]
+```
+
+Every glob must match at least one real file: run it with Glob before writing.
+
 ### `engineering/standards.md`
 
 ```markdown
@@ -290,7 +353,7 @@ Note all links are relative to the repo root (`.claude/business/...`), not to `.
 # Testing
 
 ## Commands
-[From package.json scripts — exact commands to run tests]
+[From manifest scripts, Gradle tasks or Xcode schemes — exact commands to run tests]
 
 ## Run the full stack
 [One command that starts db, backend and frontend together, from docker-compose
@@ -325,11 +388,19 @@ for them in Phase 2 (within its question limit): spec-apply and spec-verify depe
 
 1. Show the developer the full list of files to be created/modified with a one-line
    summary of each, INCLUDING whether the root `CLAUDE.md` is being merged-into vs.
-   created fresh
-2. Ask: "Does this look right? Anything to adjust before I write?"
-3. Wait for confirmation
-4. Write the root `CLAUDE.md` and all files to `.claude/`
-5. Print: "Context built. [N] files written ([root CLAUDE.md merged/created] + N under `.claude/`)."
+   created fresh, and the `paths` of every rule
+2. If 1.7 found vendored instruction files, propose the `claudeMdExcludes` globs for
+   `.claude/settings.local.json` (e.g. `"**/node_modules/**"`, `"**/SourcePackages/checkouts/**"`)
+3. Ask: "Does this look right? Anything to adjust before I write?"
+4. Wait for confirmation
+5. Write the root `CLAUDE.md`, all files to `.claude/`, and the approved settings
+6. Check the result:
+   - `wc -l CLAUDE.md` is under 200. Over it → move the part that applies to one
+     kind of file into a rule, and reference material into a linked file.
+   - Every link in the root `CLAUDE.md` resolves to a file that exists.
+   - Tell the developer to run `/context` in a new session to see what loads at
+     start, and `/doctor prompt-audit` to catch contradictions and dead references.
+7. Print: "Context built. [N] files written ([root CLAUDE.md merged/created] + N under `.claude/`, [R] rules)."
 
 ---
 
@@ -340,7 +411,10 @@ for them in Phase 2 (within its question limit): spec-apply and spec-verify depe
 - NEVER ask more than 4 questions in Phase 2.
 - NEVER create a `.claude/CLAUDE.md` file. Claude Code would load it too, giving the project two instruction files to keep in sync. The index always lives in the root `CLAUDE.md` — see "Why the root CLAUDE.md is the index" above. If a stray `.claude/CLAUDE.md` is found during Phase 1, its content must be merged into the root `CLAUDE.md` and the stray file deleted as part of this run.
 - If a root `CLAUDE.md` exists AND does NOT contain the phrase "Context not yet generated", treat it as real content: show it and ask "Context already exists — regenerate everything, update a specific file, or add a new domain?" A stub created by `harness.sh` always contains that phrase — skip the prompt and proceed directly to Phase 1.
-- If the project has no `package.json` and no recognized structure, say so and ask what stack they're using before scanning further.
+- If the project has no manifest from 1.1 and no recognized structure, say so and ask what stack they're using before scanning further.
 - Domain files are generated only for entities found in the schema or models. Never invent entities.
+- Never write a rule without `paths:` unless it applies to every task: it loads every session, like `CLAUDE.md`.
+- Never put a multi-step procedure in `CLAUDE.md` or a rule. Name it as a skill candidate in the final print instead.
+- Never write a team-owned instruction file (tracked in another repo of a hub) when the hub marks it read-only.
 - Omit `Global State` from `architecture/overview.md` if no state management library is detected.
 - The `business/glossary.md` table must include every entity, even if the code name and business name are the same.

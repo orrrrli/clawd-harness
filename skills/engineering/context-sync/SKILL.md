@@ -36,8 +36,9 @@ the one engram resolves from the cwd. `--since` overrides the last-sync date.
 1. Call `mem_current_project`. Use its project unless `$ARGUMENTS` names one. If it
    reports the project as ambiguous, stop and ask which one.
 2. Find the context tree: the root `CLAUDE.md`, every file it links (usually under
-   `.claude/`: `business/`, `architecture/`, `domains/`, `engineering/`), and the
-   project's own skills under `.claude/skills/`. A gotcha about a workflow a skill
+   `.claude/`: `business/`, `architecture/`, `domains/`, `engineering/`), the
+   path-scoped rules under `.claude/rules/` (they are not linked: list the folder),
+   and the project's own skills under `.claude/skills/`. A gotcha about a workflow a skill
    runs belongs in that skill.
 3. Read the write rules in that `CLAUDE.md`. Some hubs mark team files as
    read-only and say where local knowledge goes. Those rules decide where a
@@ -108,6 +109,8 @@ plan, anything the code or git history already shows.
 
 Pick the target from the tree's own split: business rules to `business/rules.md`,
 testing to `engineering/testing.md`, an entity's behavior to `domains/<entity>.md`,
+a code trap or convention tied to one kind of file (Kotlin services, Swift views,
+migrations) to the `.claude/rules/` file whose `paths` match it, cross-cutting
 conventions to `engineering/standards.md`, external services to
 `architecture/integrations.md`, a workflow gotcha to the skill that runs that
 workflow. When no file fits, propose the section to add instead of inventing a new
