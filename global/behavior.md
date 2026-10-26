@@ -29,6 +29,11 @@ the template stay as-is.
 - Known offenders (-> replacement): "perezosa" -> lazy, "guarda" -> guard clause,
   "invariante" -> invariant, "envoltorio" -> wrapper, "matiz" -> the actual detail,
   "divergencia"/"discrepancia" -> "X hace A, Y hace B", "acarreo", "asercion".
+- NEVER translate an English dev metaphor word by word (fresh, real, wire up,
+  assembly point, entry point, spin up). Say what the code does instead.
+- Known offenders: "DB fresca" -> "DB nueva y vacía por test";
+  "el router real" -> "el mismo router que usa producción";
+  "punto de ensamblaje" -> "donde se arma X" o nombra el archivo/función.
 - TEST before sending any Spanish sentence: could you say it out loud to a teammate
   without sounding like a paper? If no, rewrite it. Say WHAT breaks, not that
   something diverges.
