@@ -1,6 +1,6 @@
 # AI Engineering Stack
 
-A personal Claude Code harness: a 7-agent team, 19 skills and the scripts that
+A personal Claude Code harness: a 7-agent team, 20 skills and the scripts that
 wire them into any project. Clone it once, run one script per machine and one
 per project, and every Claude Code session works the same way, with the same
 rules, the same reviewers and the same delivery loop.
@@ -85,7 +85,7 @@ lose ponytail in its subagents.
 
 ### Skills
 
-19 skills across 3 categories. Each category directory has its own README:
+20 skills across 3 categories. Each category directory has its own README:
 [engineering](./skills/engineering/README.md), [ui](./skills/ui/README.md),
 [productivity](./skills/productivity/README.md).
 The **Origin** column is detailed in [Credits and sources](#credits-and-sources).
@@ -101,6 +101,7 @@ The **Origin** column is detailed in [Credits and sources](#credits-and-sources)
 | **tdd** | all | Red-green-refactor loop | mattpocock/skills |
 | **diagnose** | all | Reproduce, minimise, hypothesise, instrument, fix, regression-test | mattpocock/skills |
 | **improve-codebase-architecture** | all | Finds deepening opportunities using the .claude/ tree and engram; Artifact report | mattpocock/skills |
+| **migrate-module** | all | Maps a legacy codebase into ordered modules, then ports one module at a time with the legacy code as the spec: coverage-checked inventory, one approval, test-first capabilities, golden cases from the legacy functions | Own |
 | **audit-layer-boundaries** | web | Scans for the three violations that break the layer contract | Own |
 | **dotnet-clean-architecture** | dotnet | Scans a .NET Clean Architecture solution for dependency-rule violations | Own |
 | **android-clean-architecture** | android | Clean Architecture patterns and a layer scan for Android/KMP | affaan-m/everything-claude-code |
