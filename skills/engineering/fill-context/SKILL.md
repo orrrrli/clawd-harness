@@ -137,7 +137,7 @@ project-specific operating rules AND the context index at once; it does not need
 be minimal. What it must never be is a stub that just points at a second index file
 inside `.claude/` — see the "Why the root CLAUDE.md is the index" note above.
 
-**If no root `CLAUDE.md` exists, or it's just the bare `init-project.sh` stub:**
+**If no root `CLAUDE.md` exists, or it's just the bare `harness.sh` stub:**
 generate it fresh with this shape:
 
 ```markdown
@@ -339,7 +339,7 @@ for them in Phase 2 (within its question limit): spec-apply and spec-verify depe
 - NEVER skip Phase 1. Asking for information the code already has wastes the developer's time.
 - NEVER ask more than 4 questions in Phase 2.
 - NEVER create a `.claude/CLAUDE.md` file. Claude Code would load it too, giving the project two instruction files to keep in sync. The index always lives in the root `CLAUDE.md` — see "Why the root CLAUDE.md is the index" above. If a stray `.claude/CLAUDE.md` is found during Phase 1, its content must be merged into the root `CLAUDE.md` and the stray file deleted as part of this run.
-- If a root `CLAUDE.md` exists AND does NOT contain the phrase "Context not yet generated", treat it as real content: show it and ask "Context already exists — regenerate everything, update a specific file, or add a new domain?" A stub created by `init-project.sh` always contains that phrase — skip the prompt and proceed directly to Phase 1.
+- If a root `CLAUDE.md` exists AND does NOT contain the phrase "Context not yet generated", treat it as real content: show it and ask "Context already exists — regenerate everything, update a specific file, or add a new domain?" A stub created by `harness.sh` always contains that phrase — skip the prompt and proceed directly to Phase 1.
 - If the project has no `package.json` and no recognized structure, say so and ask what stack they're using before scanning further.
 - Domain files are generated only for entities found in the schema or models. Never invent entities.
 - Omit `Global State` from `architecture/overview.md` if no state management library is detected.

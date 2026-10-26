@@ -369,7 +369,7 @@ git commit -m "<type>(<SCOPE_ID>): <Imperative summary>"
 
 Rules:
 - **Conventional Commits format** (`feat`, `fix`, `refactor`, `test`, …) — projects set up by
-  `init-project.sh` reject any other subject through the git `commit-msg` hook that
+  `harness.sh` reject any other subject through the git `commit-msg` hook that
   `core.hooksPath` points to in clawd-harness (`global/githooks/`).
   Pick the type that matches the Story.
 - **Subject line only — no body, no trailers.** The scope is the Story ID (or the Task ID on a

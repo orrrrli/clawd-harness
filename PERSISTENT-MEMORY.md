@@ -60,7 +60,7 @@ Installed as a Claude Code plugin; it needs no configuration here. See the
 
 ### 2. engram
 
-`install-global.sh` checks for it and prints these commands, but never runs
+`harness.sh --global` checks for it and prints these commands, but never runs
 them (same rule as the other MCP servers). Run them once per machine:
 ```bash
 brew install gentleman-programming/tap/engram
