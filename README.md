@@ -20,7 +20,7 @@ removed. Everything targets Claude Code's own conventions (`.claude/skills/`,
   │ behavior.md, statusline-command.sh   │            │ core.hooksPath -> githooks/       │
   │                                      │            │   (commit-msg, post-checkout)     │
   └──────────────────────────────────────┘            └──────────────────────────────────┘
-          install-global.sh                                   init-project.sh
+          harness.sh --global                                 harness.sh <dir>
 ```
 
 ## Contents
@@ -41,10 +41,14 @@ removed. Everything targets Claude Code's own conventions (`.claude/skills/`,
 git clone <this-repo> ~/dev/personal/clawd-harness
 
 # Once per machine
-~/dev/personal/clawd-harness/install-global.sh
+~/dev/personal/clawd-harness/harness.sh --global
 
 # Once per project
-~/dev/personal/clawd-harness/init-project.sh ~/dev/my-app --stack=web
+~/dev/personal/clawd-harness/harness.sh ~/dev/my-app --stack=web
+
+# After a git pull: relink only, settings untouched
+~/dev/personal/clawd-harness/harness.sh --global --update
+~/dev/personal/clawd-harness/harness.sh ~/dev/my-app --update
 ```
 
 Then open Claude Code in the project and run `/fill-context`.
@@ -53,7 +57,7 @@ Then open Claude Code in the project and run `/fill-context`.
 
 ### Agents
 
-Installed at user level by `install-global.sh` (`global/agents/`). By default
+Installed at user level by `harness.sh --global` (`global/agents/`). By default
 the main session runs as `software-architect`, which writes the feature code and
 dispatches the rest as subagents: one prompt in, one report back.
 
@@ -188,7 +192,8 @@ phase. `tdd` stays a separate skill for test-first work outside a Story.
 ## Global layer (once per machine)
 
 ```bash
-~/dev/personal/clawd-harness/install-global.sh
+~/dev/personal/clawd-harness/harness.sh --global            # full setup
+~/dev/personal/clawd-harness/harness.sh --global --update   # links only: agents, behavior, skills, statusline
 ```
 
 - Symlinks `~/.claude/agents` to `global/agents/`.
@@ -214,9 +219,9 @@ phase. `tdd` stays a separate skill for test-first work outside a Story.
 
 Safe to re-run. Agents update with `git pull`, since they are a symlink.
 
-### Guardrails (user level, installed by `install-global.sh`)
+### Guardrails (user level, installed by `harness.sh --global`)
 
-The rules live in `global/permissions.json` and `install-global.sh` merges them
+The rules live in `global/permissions.json` and `harness.sh --global` merges them
 into `~/.claude/settings.json`. Claude Code enforces them before a tool runs,
 whatever the model decides, and at no cost per call (no process, unlike a hook).
 To change one, edit `global/permissions.json` and re-run the script. Removing a
@@ -299,7 +304,7 @@ the repo's `CLAUDE.md`, `.claude/` and `.mcp.json`, and nothing from your
 ([docs](https://code.claude.com/docs/en/cloud-environments.md)).
 
 The environment's setup script fills that gap. It runs as root before Claude
-starts, clones this repo, runs `install-global.sh`, and writes your user-level
+starts, clones this repo, runs `harness.sh --global`, and writes your user-level
 `CLAUDE.md` plus the files it imports with `@`.
 
 Setup, once per environment:
@@ -328,48 +333,57 @@ Setup, once per environment:
 
 ## Per-project installation
 
-Use the init script rather than symlinking by hand. It wires the symlinks, the
+Use `harness.sh` rather than symlinking by hand. It wires the symlinks, the
 context tree, the gitignore entries, and the commit-msg hook in one pass.
 
 ```bash
 # Web / Next.js project
-~/dev/personal/clawd-harness/init-project.sh ~/dev/my-app --stack=web
+~/dev/personal/clawd-harness/harness.sh ~/dev/my-app --stack=web
 
 # .NET Clean Architecture project
-~/dev/personal/clawd-harness/init-dotnet-project.sh ~/dev/my-api
+~/dev/personal/clawd-harness/harness.sh ~/dev/my-api --stack=dotnet
 
 # Android / Kotlin project
-~/dev/personal/clawd-harness/init-project.sh ~/dev/my-app --stack=android
+~/dev/personal/clawd-harness/harness.sh ~/dev/my-app --stack=android
 
 # iOS / SwiftUI project
-~/dev/personal/clawd-harness/init-project.sh ~/dev/my-app --stack=ios
+~/dev/personal/clawd-harness/harness.sh ~/dev/my-app --stack=ios
 
 # Monorepo: .NET API + React frontend
-~/dev/personal/clawd-harness/init-project.sh ~/dev/my-app --stack=web,dotnet
+~/dev/personal/clawd-harness/harness.sh ~/dev/my-app --stack=web,dotnet
 ```
 
 ### `--stack`: install only what the project needs
 
-Every skill declares a `stacks:` field in its frontmatter, and the init
-script links only the matching ones. An Android project has no use for
+Every skill declares a `stacks:` field in its frontmatter, and `harness.sh`
+links only the matching ones. An Android project has no use for
 `audit-layer-boundaries`. Agents are not per project: see Global layer.
 
 | `--stack` | skills |
 |-----------|--------|
-| `web`     | 12 |
-| `dotnet`  | 13 |
-| `android` | 12 |
-| `ios`     | 14 |
-| `all`     | 18 |
-| `web,dotnet` | 14 (union) |
+| `web`     | 13 |
+| `dotnet`  | 14 |
+| `android` | 13 |
+| `ios`     | 15 |
+| `all`     | 19 |
+| `web,dotnet` | 15 (union) |
 
 A monorepo passes a comma list (`--stack=web,dotnet` for a .NET API and a React
 frontend in one repo) and gets the union of those stacks, plus the web-only
 settings (pnpm) when `web` is in the list. `all` cannot be combined.
 
-Omitting the flag installs everything (`all`); `init-dotnet-project.sh` defaults
-to `dotnet`. It also links the external repo `~/dev/oss/dotnet-clean-architecture-skills`
-into `.claude/commands/dotnet` and `.claude/recipes`, so clone it there first.
+Omitting the flag installs everything (`all`). When `dotnet` is in the list, it also
+links the external repo `~/dev/oss/dotnet-clean-architecture-skills` into
+`.claude/commands/dotnet` and `.claude/recipes`, so clone it there first.
+
+### `--update`: pick up new skills after a `git pull`
+
+The first run records the stacks in `.claude/harness-stack` (gitignored).
+`harness.sh <dir> --update` reads it and only relinks: new skills get linked,
+deleted ones are unlinked, and new links get their `.gitignore` line. It never
+touches the context tree, `CLAUDE.md`, `.claude/settings.json` or the commit hook.
+A project set up before this file existed needs `--stack` once:
+`harness.sh <dir> --update --stack=web`.
 
 ### Commit message hook
 
@@ -451,7 +465,7 @@ into this stack:
 
 > [!IMPORTANT]
 > Projects initialized before this change have a bare `.claude/` line in their
-> `.gitignore`, which keeps the whole tree out of git. The init script detects it
+> `.gitignore`, which keeps the whole tree out of git. `harness.sh` detects it
 > and tells you, but cannot fix it — a `.gitignore` entry added later cannot
 > override a broader one already there. Remove the `.claude/` line by hand, then
 > `git add .claude`.
@@ -508,7 +522,7 @@ Pending, in order:
 
 Small cleanups:
 
-- Linux and Windows support for the init scripts, statusline and hooks:
+- Linux and Windows support for `harness.sh`, the statusline and hooks:
   issue #3.
 - Decide whether the commit-msg hook accepts a `release:` type. Today it
   rejects it.
@@ -552,16 +566,14 @@ and the `ponytail` and [`i-have-adhd`](https://github.com/ayghri/i-have-adhd) pl
 
 | File | Purpose |
 |------|---------|
-| `install-global.sh` | User-level setup, once per machine |
-| `global/permissions.json` | Guardrail deny/ask rules, merged into `~/.claude/settings.json` by `install-global.sh` |
+| `global/permissions.json` | Guardrail deny/ask rules, merged into `~/.claude/settings.json` by `harness.sh --global` |
 | `global/build-cloud-setup.sh` | Prints the setup script for a claude.ai/code cloud environment |
-| `init-project.sh` | Project setup, `--stack` aware |
-| `init-dotnet-project.sh` | Same, for .NET Clean Architecture (defaults to `dotnet`) |
+| `harness.sh` | The only installer: project setup (`--stack` aware), `--global` for the user level, `--update` to relink only |
 | `global/agents/` | The 7-agent team |
 | `global/githooks/commit-msg` | Commit message hook, referenced via `core.hooksPath` |
 | `global/githooks/post-checkout` | Links the local Claude harness and ignored `.env*` files into new worktrees, same `core.hooksPath` |
 | `global/claude-hooks/` | Optional Claude Code hooks, opt-in, referenced from settings |
-| `global/statusline-command.sh` | Statusline, linked by `install-global.sh`; shows the runtime mode |
+| `global/statusline-command.sh` | Statusline, linked by `harness.sh --global`; shows the runtime mode |
 | `~/.claude/runtime-mode` | Not in the repo. `light` or `full`, read by spec-apply and spec-verify; missing = `light` |
-| `global/behavior.md` | How the agent writes and acts, linked as `~/.claude/behavior.md` by `install-global.sh` |
+| `global/behavior.md` | How the agent writes and acts, linked as `~/.claude/behavior.md` by `harness.sh --global` |
 | `PERSISTENT-MEMORY.md` | claude-mem + engram memory guide |

@@ -30,7 +30,7 @@ cat <<EOF
 set -euo pipefail
 command -v jq >/dev/null || apt-get install -y jq
 git clone --depth 1 $REPO_URL /opt/clawd-harness
-bash /opt/clawd-harness/install-global.sh
+bash /opt/clawd-harness/harness.sh --global
 
 # Personal files: generated from $CLAUDE_DIR, not in the public repo
 EOF
@@ -39,7 +39,7 @@ EOF
 heredoc CLAUDE.md "$(grep -vx '@RTK.md' "$CLAUDE_DIR/CLAUDE.md")"
 { grep -x '@[^ ]*\.md' "$CLAUDE_DIR/CLAUDE.md" || true; } | sed 's/^@//' | while read -r f; do
     [ "$f" = "RTK.md" ] && continue
-    [ "$f" = "behavior.md" ] && continue   # linked from the clone by install-global.sh
+    [ "$f" = "behavior.md" ] && continue   # linked from the clone by harness.sh --global
     [ -f "$CLAUDE_DIR/$f" ] || { echo "Missing $CLAUDE_DIR/$f (imported by CLAUDE.md)" >&2; exit 1; }
     heredoc "$f" "$(cat "$CLAUDE_DIR/$f")"
 done

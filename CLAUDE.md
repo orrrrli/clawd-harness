@@ -1,6 +1,6 @@
 # clawd-harness
 
-The Claude Code harness itself: skills, agents, and the init scripts that wire
+The Claude Code harness itself: skills, agents, and the installer (`harness.sh`) that wires
 them into a project. There is no application here — it is markdown and bash.
 
 ## Layout
@@ -8,20 +8,18 @@ them into a project. There is no application here — it is markdown and bash.
 ```
 skills/<category>/<name>/SKILL.md   19 skills across 3 categories
 global/agents/<name>.md             7-agent team, user-level (all projects)
-init-project.sh                     project setup, --stack aware
-init-dotnet-project.sh              same, for .NET (defaults to --stack=dotnet)
-install-global.sh                   user-level setup, once per machine
-global/behavior.md                  how the agent writes and acts (no personal data), linked as ~/.claude/behavior.md by install-global.sh
-global/statusline-command.sh        statusline, linked by install-global.sh
-global/permissions.json             guardrail deny/ask rules, merged into ~/.claude/settings.json by install-global.sh
+harness.sh                          the only installer: project setup (--stack aware), --global, --update
+global/behavior.md                  how the agent writes and acts (no personal data), linked as ~/.claude/behavior.md by harness.sh --global
+global/statusline-command.sh        statusline, linked by harness.sh --global
+global/permissions.json             guardrail deny/ask rules, merged into ~/.claude/settings.json by harness.sh --global
 global/build-cloud-setup.sh         prints the claude.ai/code environment setup script; output holds personal files, never commit it
 global/githooks/commit-msg          commit message hook; repos point at it via core.hooksPath, never copied
 global/githooks/post-checkout       on `git worktree add`, symlinks the ignored Claude harness and .env* files from the main checkout
 global/claude-hooks/<name>.sh       optional Claude Code hooks; settings point at them, never copied, nothing installs them```
 
-Each skill is symlinked into a target project as `.claude/skills/<skill>` by the init scripts. There are no per-project agents.
+Each skill is symlinked into a target project as `.claude/skills/<skill>` by `harness.sh`. There are no per-project agents.
 
-`global/agents/` is symlinked as `~/.claude/agents` by `install-global.sh`, which
+`global/agents/` is symlinked as `~/.claude/agents` by `harness.sh --global`, which
 also sets `"agent": "software-architect"` in `~/.claude/settings.json`. That
 setting is the default for every session, including folders never init'ed, so the
 architect must live at user level. `claude-design` (a shell alias for
@@ -30,20 +28,21 @@ architect must live at user level. `claude-design` (a shell alias for
 ## Commands
 
 ```bash
-./init-project.sh <dir> --stack=all|web|dotnet|android|ios   # or a list: --stack=web,dotnet
-./init-dotnet-project.sh <dir>
-bash -n init-project.sh              # syntax check
+./harness.sh <dir> --stack=all|web|dotnet|android|ios   # or a list: --stack=web,dotnet
+./harness.sh <dir> --update          # relink skills only, stacks read from .claude/harness-stack
+./harness.sh --global                # user level; add --update to relink without touching settings.json
+bash -n harness.sh                   # syntax check
 ```
 
 There is no build, no test runner, and no package.json. To verify a change to
-the init scripts, run them against a scratch directory and inspect the result —
-they create real symlinks and set real git config, so use a throwaway path
+`harness.sh`, run it against a scratch directory and inspect the result —
+it creates real symlinks and set real git config, so use a throwaway path
 and clean up after.
 
 ## Conventions
 
-**Every skill declares `stacks:` in its frontmatter.** The init
-scripts read it and link only what matches `--stack`, so a .NET project does
+**Every skill declares `stacks:` in its frontmatter.** `harness.sh`
+reads it and links only what matches `--stack`, so a .NET project does
 not receive `audit-layer-boundaries`. Valid values: `all`, `web`, `dotnet`, `android`, `ios`. `all`
 is exclusive — never combine it with another value.
 

@@ -4,7 +4,7 @@
 # does, Git for Windows included.
 #
 # Lives only in clawd-harness; nothing is copied into work repos. Each
-# repo points here with local, untracked config (init-project.sh does it):
+# repo points here with local, untracked config (harness.sh <dir> does it):
 #   git config core.hooksPath ~/dev/personal/clawd-harness/global/githooks
 
 subject=$(grep -v '^#' "$1" | sed -n '/[^[:space:]]/{p;q;}')
