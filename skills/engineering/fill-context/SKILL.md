@@ -299,6 +299,14 @@ part, and how the frontend finds the backend (env var name). If parts start
 separately, one command per part in start order. spec-verify's browser check runs
 against this.]
 
+[Worktree ports: the command first loads `.env.worktree` when it exists
+(`set -a; [ -f .env.worktree ] && . ./.env.worktree; set +a`), and the project reads
+its ports with defaults: `"${WT_DB_PORT:-5432}:5432"` in compose,
+`${WT_API_PORT:-<port>}` for the API, `${WT_WEB_PORT:-<port>}` for the frontend, and
+the db port inside the API's connection string. Note here whether the project
+follows this. If it hardcodes ports, say which files to change: until then two
+Story worktrees cannot run their stacks at the same time.]
+
 ## E2E command
 [The e2e runner (Playwright, Cypress, ...) and its exact command, from its config
 file and scripts. If the project has none, write "None" — spec-apply then asks
