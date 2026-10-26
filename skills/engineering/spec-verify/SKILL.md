@@ -8,7 +8,7 @@ description: >
   Verify an implementation against its Story's acceptance criteria and the
   code-quality spec, in a fresh code-reviewer subagent. Delivers PASS/FAIL per
   criterion with file:line evidence, after running the project's own tests.
-  Report only: never fixes, never closes issues. Use after implementing a task,
+  Report only: never fixes, never closes issues. Use after implementing a Story or task,
   when the user says "verify this", "does this match the spec", "spec-verify",
   and from spec-apply Phase 4.
 ---
@@ -80,6 +80,17 @@ under Engineering and Business, mainly `engineering/standards.md`,
 
 ## 4. Run the tests
 
+**Runtime mode.** Read it first: `cat ~/.claude/runtime-mode 2>/dev/null`.
+`full` runs everything below. Anything else, including a missing file, is
+`light`: the machine is shared with other work (simulators, JVM backends), so
+nothing that needs the running stack is started. In `light`:
+- Skip the e2e test command and the browser check.
+- Mark each criterion that only they can prove `~ DEFERRED (light mode: <e2e |
+  browser check> not run)`. A criterion another test already proves keeps its
+  normal verdict.
+- Unit, component and integration tests that need no running stack still run,
+  and so does the mutation check.
+
 Use the commands from `engineering/testing.md`; otherwise the project's own
 (`npm test`, `pnpm test`, `dotnet test`, `./gradlew test`). Record what actually
 ran and the result. If they could not run, say why. Never report "tests pass"
@@ -123,12 +134,26 @@ for backend-only or API-only criteria.
    not installed, UI not checked)` and go on.
 2. Read `~/.claude/skills/ego-browser/SKILL.md` before writing any script.
    Its API is not Playwright; use only what that file lists.
-3. Start the project's dev server (command from `engineering/testing.md`,
-   else `package.json` scripts) in the background, on a free port.
+3. Start what the criterion needs, in the background. In a worktree with
+   `.env.worktree`, load it first (`set -a; . ./.env.worktree; set +a`) so the
+   stack takes that worktree's ports and its own compose project, and two
+   Stories never share a database:
+   - UI only (no API call behind it): the frontend dev server, command from
+     `engineering/testing.md`, else `package.json` scripts.
+   - A `fullstack` Story, or any criterion whose UI calls the backend: the whole
+     stack (db, backend, frontend) with the "Run the full stack" command from
+     `engineering/testing.md`. Without one, start each part with its own
+     documented command. If neither exists, mark those criteria `~ PARTIAL (full
+     stack start not documented in engineering/testing.md)` and go on. Never
+     point the UI at a mocked API: the check is the real slice.
+   Use the ports the env files set, so the frontend reaches the backend. A port
+   already in use is reported as the reason for `~ PARTIAL`; never kill a
+   process you did not start.
 4. Use one TaskSpace for the whole check. Drive the flow the criterion
    describes, through the UI the user would use. Record the URL, the steps,
    and what the snapshot showed.
-5. Stop the dev server when done.
+5. Stop every process you started when done (`docker compose down` if the full
+   stack command started containers; keep the volume, the Story reuses it).
 
 A criterion confirmed in the browser counts as ✓ even with no automated test
 for that layer; cite the steps and snapshot as evidence. If the browser shows
@@ -154,7 +179,8 @@ Write the reasoning before each verdict.
 ## 6. Report
 
 ```
-VERDICT: PASS | FAIL   <ID> — <title>   (Story #<n>)
+VERDICT: PASS | PASS (DEFERRED) | FAIL   <ID> — <title>   (Story #<n>)
+Mode: light | full
 Tests: <command> → <result>   [pre-existing failures: <list or none>]
 Mutation: AC1 <mutation> → red | AC2 <mutation> → GREEN (survived)
 
@@ -162,6 +188,7 @@ Acceptance criteria
   ✓ AC1 <criterion>: <evidence, file:line>
   ✗ AC2 <criterion>: <what is missing, file:line>
   ~ AC3 <criterion>: PARTIAL, <why>
+  ~ AC4 <criterion>: DEFERRED (light mode: e2e not run)
 
 Code quality, in scope (blocking first)
   [blocking] file:line — <issue>
@@ -171,8 +198,11 @@ Outside this change (never blocking)
   file:line — <issue>
 ```
 
-FAIL if any criterion is ✗ or ~, a test fails because of this change, tests
-could not run, or there is an in-scope blocking finding.
+FAIL if any criterion is ✗ or ~ PARTIAL, a test fails because of this change, tests
+could not run, or there is an in-scope blocking finding. PASS (DEFERRED) when the
+only gaps are `~ DEFERRED` criteria: everything that ran passed, and the slice
+still needs a `full` run before the PR can leave draft. In `full` mode no
+criterion is ever DEFERRED.
 
 ## Hard rules
 

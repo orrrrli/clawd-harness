@@ -3,37 +3,51 @@
 # Resolves the absolute path to the directory containing this script
 STACK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Parse args: optional target dir, plus --stack=all|web|dotnet|android|ios
+# or a comma list (--stack=web,dotnet) for a monorepo; `all` cannot be combined.
 STACK="all"
 POSITIONAL=()
 for arg in "$@"; do
     case "$arg" in
         --stack=*) STACK="${arg#--stack=}" ;;
         -h|--help)
-            echo "usage: init-project.sh [target-dir] [--stack=all|web|dotnet|android|ios]"
+            echo "usage: init-project.sh [target-dir] [--stack=all|web|dotnet|android|ios[,...]]"
             exit 0 ;;
         *) POSITIONAL+=("$arg") ;;
     esac
 done
-case "$STACK" in
-    all|web|dotnet|android|ios) ;;
-    *) echo "ERROR: Unknown stack '$STACK'. Use: all, web, dotnet, android, ios"; exit 1 ;;
-esac
+STACKS=(${STACK//,/ })
+[ ${#STACKS[@]} -gt 0 ] || { echo "ERROR: Empty --stack."; exit 1; }
+for s in "${STACKS[@]}"; do
+    case "$s" in
+        web|dotnet|android|ios) ;;
+        all) [ ${#STACKS[@]} -eq 1 ] || { echo "ERROR: 'all' cannot be combined with other stacks."; exit 1; } ;;
+        *) echo "ERROR: Unknown stack '$s'. Use: all, web, dotnet, android, ios (comma-separated)"; exit 1 ;;
+    esac
+done
+
+# Returns 0 if $1 is one of the requested stacks.
+has_stack() {
+    local s
+    for s in "${STACKS[@]}"; do [ "$s" = "$1" ] && return 0; done
+    return 1
+}
 
 TARGET_DIR="${POSITIONAL[0]:-$(pwd)}"
 PROJECT_NAME="$(basename "$TARGET_DIR")"
 
 # --- stack filtering -------------------------------------------------------
-# Returns 0 if the file's `stacks:` frontmatter includes $STACK (or "all").
+# Returns 0 if the file's `stacks:` frontmatter includes any requested stack (or "all").
 stack_match() {
-    [ "$STACK" = "all" ] && return 0
-    local line
+    has_stack all && return 0
+    local line s
     # -a: some SKILL.md files contain stray control bytes, and without it grep
     # answers "Binary file ... matches" instead of the line.
     line="$(grep -a -m1 '^stacks: \[' "$1")" || return 1
-    case "$line" in
-        *all*|*"$STACK"*) return 0 ;;
-        *) return 1 ;;
-    esac
+    case "$line" in *all*) return 0 ;; esac
+    for s in "${STACKS[@]}"; do
+        case "$line" in *"$s"*) return 0 ;; esac
+    done
+    return 1
 }
 
 # Symlinks every matching skill into $1.
@@ -178,7 +192,7 @@ fi
 # 7. Setup Claude Code settings.json
 # Claude Code auto-loads the root CLAUDE.md natively — no hook needed for context
 # Web projects use pnpm: the deny blocks npm/npx so the rule holds even when the model forgets it.
-if [ ! -f ".claude/settings.json" ] && [ "$STACK" = "web" ]; then
+if [ ! -f ".claude/settings.json" ] && has_stack web; then
     cat > ".claude/settings.json" <<'EOF'
 {
   "permissions": {
@@ -206,7 +220,7 @@ fi
 # checked-in team instructions), leave it untouched: /fill-context merges into it.
 PM="npm"
 PM_RULE=""
-if [ "$STACK" = "web" ]; then
+if has_stack web; then
     PM="pnpm"
     PM_RULE="Always use pnpm, never npm or npx (\`pnpm dlx\` for one-off binaries)."
 fi

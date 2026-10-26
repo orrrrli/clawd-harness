@@ -6,7 +6,7 @@ them into a project. There is no application here — it is markdown and bash.
 ## Layout
 
 ```
-skills/<category>/<name>/SKILL.md   19 skills across 3 categories
+skills/<category>/<name>/SKILL.md   18 skills across 3 categories
 global/agents/<name>.md             7-agent team, user-level (all projects)
 init-project.sh                     project setup, --stack aware
 init-dotnet-project.sh              same, for .NET (defaults to --stack=dotnet)
@@ -16,7 +16,7 @@ global/statusline-command.sh        statusline, linked by install-global.sh
 global/permissions.json             guardrail deny/ask rules, merged into ~/.claude/settings.json by install-global.sh
 global/build-cloud-setup.sh         prints the claude.ai/code environment setup script; output holds personal files, never commit it
 global/githooks/commit-msg          commit message hook; repos point at it via core.hooksPath, never copied
-global/githooks/post-checkout       on `git worktree add`, symlinks the ignored Claude harness from the main checkout
+global/githooks/post-checkout       on `git worktree add`, symlinks the ignored Claude harness and .env* files from the main checkout
 global/claude-hooks/<name>.sh       optional Claude Code hooks; settings point at them, never copied, nothing installs them```
 
 Each skill is symlinked into a target project as `.claude/skills/<skill>` by the init scripts. There are no per-project agents.
@@ -30,7 +30,7 @@ architect must live at user level. `claude-design` (a shell alias for
 ## Commands
 
 ```bash
-./init-project.sh <dir> --stack=all|web|dotnet|android|ios
+./init-project.sh <dir> --stack=all|web|dotnet|android|ios   # or a list: --stack=web,dotnet
 ./init-dotnet-project.sh <dir>
 bash -n init-project.sh              # syntax check
 ```
@@ -60,6 +60,17 @@ silently dropped from every filtered install.
 
 Agents in `global/agents/` have no `stacks:`. Nothing filters them; every
 machine gets the whole team.
+
+**Delivery is vertical slices.** `prd-to-github-backlog` writes one `fullstack`
+Story (`FS-<EPIC>-<n>`) per feature, and `spec-apply` builds a Story across every
+layer in one cycle. Never reintroduce a backend-story + frontend-story split or a
+per-task loop.
+
+**Two runtime modes.** `spec-apply` and `spec-verify` read `~/.claude/runtime-mode`
+(`light` | `full`, missing = `light`). `light` starts no stack and defers the e2e
+and browser checks; `full` runs them on the worktree's own stack from
+`.env.worktree` (written by `global/githooks/post-checkout`). A change to either
+skill's stack steps must keep both modes working.
 
 **Claude Code only.** Support for Windsurf and OpenCode was removed; do not
 reintroduce `.windsurf/`, `.opencode/` or their rules files.

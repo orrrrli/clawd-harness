@@ -1,6 +1,6 @@
 # AI Engineering Stack
 
-A personal Claude Code harness: a 7-agent team, 19 skills and the scripts that
+A personal Claude Code harness: a 7-agent team, 18 skills and the scripts that
 wire them into any project. Clone it once, run one script per machine and one
 per project, and every Claude Code session works the same way, with the same
 rules, the same reviewers and the same delivery loop.
@@ -81,7 +81,7 @@ lose ponytail in its subagents.
 
 ### Skills
 
-19 skills across 3 categories. Each category directory has its own README:
+18 skills across 3 categories. Each category directory has its own README:
 [engineering](./skills/engineering/README.md), [ui](./skills/ui/README.md),
 [productivity](./skills/productivity/README.md).
 The **Origin** column is detailed in [Credits and sources](#credits-and-sources).
@@ -89,8 +89,8 @@ The **Origin** column is detailed in [Credits and sources](#credits-and-sources)
 | Skill | Stacks | What it does | Origin |
 |-------|--------|--------------|--------|
 | **spec-apply** | all | Implements a GitHub Story across every layer in one cycle (its Tasks are the checklist): explore, propose, failing tests, apply, verify, commit, PR | Own |
-| **spec-verify** | all | Checks an implementation against its acceptance criteria in a fresh code-reviewer, with a mutation check | Own |
-| **prd-to-github-backlog** | all | PRD to GitHub Project: epics, stories, tasks, sprints, estimates | Own |
+| **spec-verify** | all | Checks an implementation against its acceptance criteria in a fresh code-reviewer, with a mutation check and, in full mode, a browser check against the real stack | Own |
+| **prd-to-github-backlog** | all | PRD to GitHub Project: epics, vertical-slice (`fullstack`) stories, tasks per area, sprints, estimates | Own |
 | **fill-context** | all | Scans the codebase and interviews you to write the `.claude/` context tree | Own |
 | **prompt-rewrite** | all | Audits a skill, agent or prompt against Anthropic's prompting docs | Adapted |
 | **tdd** | all | Red-green-refactor loop | mattpocock/skills |
@@ -106,9 +106,35 @@ The **Origin** column is detailed in [Credits and sources](#credits-and-sources)
 | **grill-me** | all | Interviews you about a plan until every branch is resolved | mattpocock/skills |
 | **handoff** | all | Session handoff document, copied to the clipboard | Own |
 | **blind-pick** | all | Options for a hard-to-reverse decision argue against each other; blind judges pick the winner | Own |
-| **caveman** | all | Ultra-compressed replies, ~75% fewer tokens | JuliusBrussee/caveman |
 
-`ponytail` is no longer vendored here. It is installed as a Claude Code plugin.
+`ponytail` and `i-have-adhd` are not vendored here. They are installed as Claude
+Code plugins, so they update from upstream; neither reaches cloud sessions.
+`i-have-adhd` ([ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd), MIT)
+shapes replies for an ADHD reader: next action first, numbered steps, state
+restated every turn. Invoke it with `/i-have-adhd`; `stop adhd mode` turns it off.
+It replaced the vendored `caveman`.
+
+#### From PRD to merged slice
+
+Work is cut in vertical slices: one Story is one behavior the user can use, built
+across db, backend and frontend together. The spec is that Story's Given/When/Then
+acceptance criteria on GitHub.
+
+```
+PRD
+  -> prd-to-github-backlog   Epics -> fullstack Stories (FS-<EPIC>-<n>) -> Tasks, each with its area
+  -> spec-apply <STORY>      one worktree, one cycle across every layer, two commits (red tests, code)
+  -> spec-verify             AC, code quality, mutation check; e2e + browser check on the real stack
+  -> one PR per Story        draft with deferred-checks in light mode, ready after a full-mode run
+```
+
+- A feature is one `fullstack` Story, never a backend Story plus a frontend Story.
+  `backend`/`frontend` Stories are only for work with no other side (foundation, a job).
+- Every `fullstack` Story has at least one criterion the user observes in the UI.
+- A Story bigger than L is split into thinner slices by behavior (email sign-in, then
+  OAuth), never by layer. spec-apply refuses an XL Story.
+- Design Stories stay separate: they run in a `claude-design` session.
+- All of it lives in one GitHub Project. Filter by `area:*` labels to see one layer.
 
 #### How spec-apply writes code
 
@@ -122,6 +148,21 @@ Story AC (Given/When/Then, approved)          business-analyst drafts them if mi
   -> Apply       the implementer makes those tests pass (ponytail ladder), never edits them
   -> Verify      spec-verify reruns the tests and breaks each AC's line to prove its test fails
 ```
+
+**Runtime modes.** `~/.claude/runtime-mode` holds `light` or `full`; a missing file
+is `light`. The statusline shows which one is on.
+
+- `light`, for when the machine is busy with other work (simulators, JVM backends):
+  no stack is started. Unit, component and integration tests still run, plus the
+  review and the mutation check. The e2e test and the browser check are marked
+  `~ DEFERRED`, and the Story's PR opens as a draft labeled `deferred-checks`, with
+  its Tasks still open.
+- `full`: each Story worktree runs its own stack (its own Postgres container and
+  ports, from `.env.worktree`), so 2-3 Stories verify in parallel. Running
+  `/spec-apply <STORY_ID>` on a Story with a `deferred-checks` draft only runs the
+  slice checks. When they pass, it marks the PR ready and closes the Tasks.
+
+Switch with `echo full > ~/.claude/runtime-mode` (or `light`).
 
 One Story is one cycle across db, backend and frontend. Its Task sub-issues are the checklist
 the plan must cover, and are closed together at the end. An XL Story stops before any code
@@ -140,7 +181,7 @@ spec-verify reviews.
 4. **Passing is not enough.** For each AC, `spec-verify` breaks the implementing line once in
    a scratch worktree. A test that stays green marks the AC `~ PARTIAL`, and the Story fails.
 
-Tasks with no testable behavior (config, scaffolding) say so in Propose and skip the Tests
+Stories with no testable behavior (config, scaffolding) say so in Propose and skip the Tests
 phase. `tdd` stays a separate skill for test-first work outside a Story.
 
 ## Global layer (once per machine)
@@ -163,7 +204,7 @@ phase. `tdd` stays a separate skill for test-first work outside a Story.
   `permissions.deny`/`ask` (see Guardrails). Only adds the missing ones, after
   yours; never removes or reorders a rule.
 - Symlinks `~/.claude/statusline-command.sh` to `global/` (repo, branch, PR,
-  running agent, model, context and rate limits; needs a Nerd Font) and sets
+  running agent, runtime mode, model, context and rate limits; needs a Nerd Font) and sets
   `statusLine` only when none is configured. A `refreshInterval` of `3000` is
   rewritten to `3`, since the value is in seconds.
 - Prints the `claude mcp add` commands for context7 and GitHub. Run them by hand:
@@ -301,6 +342,9 @@ context tree, the gitignore entries, and the commit-msg hook in one pass.
 
 # iOS / SwiftUI project
 ~/dev/personal/clawd-harness/init-project.sh ~/dev/my-app --stack=ios
+
+# Monorepo: .NET API + React frontend
+~/dev/personal/clawd-harness/init-project.sh ~/dev/my-app --stack=web,dotnet
 ```
 
 ### `--stack`: install only what the project needs
@@ -311,11 +355,16 @@ script links only the matching ones. An Android project has no use for
 
 | `--stack` | skills |
 |-----------|--------|
-| `web`     | 13 |
-| `dotnet`  | 14 |
-| `android` | 13 |
-| `ios`     | 15 |
-| `all`     | 19 |
+| `web`     | 12 |
+| `dotnet`  | 13 |
+| `android` | 12 |
+| `ios`     | 14 |
+| `all`     | 18 |
+| `web,dotnet` | 14 (union) |
+
+A monorepo passes a comma list (`--stack=web,dotnet` for a .NET API and a React
+frontend in one repo) and gets the union of those stacks, plus the web-only
+settings (pnpm) when `web` is in the list. `all` cannot be combined.
 
 Omitting the flag installs everything (`all`); `init-dotnet-project.sh` defaults
 to `dotnet`. It also links the external repo `~/dev/oss/dotnet-clean-architecture-skills`
@@ -349,11 +398,34 @@ ticket-first (`OG-4703: ...`). It is POSIX `sh` plus `grep -E`.
 `global/githooks/post-checkout` runs too. It acts only on `git worktree add`
 (git passes an all-zero previous ref then). It symlinks the main checkout's
 ignored `CLAUDE.md`, `.claude`, `*/CLAUDE.md` and `docs/brain` into the new
-worktree, so every worktree shares one copy of the harness.
+worktree, so every worktree shares one copy of the harness. It links the ignored
+env files too (`.env`, `.env.local`, `apps/api/.env`, any `.env.*`), so the app
+starts in the worktree for e2e tests and the browser check. A tracked
+`.env.example` is already there and is left alone.
+
+It also writes `.env.worktree` (never linked, excluded through `.git/info/exclude`)
+with a slot of its own, ports that are free on the whole machine, and a compose
+project name, so 2-3 Story stacks run side by side in full mode:
+
+```
+COMPOSE_PROJECT_NAME=<repo>-feat-fs-auth-1   # own containers and Postgres volume
+WT_SLOT=1
+WT_DB_PORT=15433    # 15432 + slot
+WT_API_PORT=18001   # 18000 + slot
+WT_WEB_PORT=13001   # 13000 + slot
+```
+
+A slot whose ports are taken (a work project's Postgres, another worktree) is
+skipped. The project reads the values with defaults, so the main checkout keeps
+its usual ports: `"${WT_DB_PORT:-5432}:5432"` in compose, `${WT_API_PORT:-5000}`
+in the API's port setting. Detached worktrees (spec-verify's scratch copies)
+get no file.
 
 - A `.claude/` ignore rule with a trailing slash does not match the symlink, so
   git sees it as untracked. Write the rule as `.claude`, without the slash.
-- Delete the symlinks before `git worktree remove`.
+- Git has no hook for `git worktree remove`. Before it, stop the Story's
+  containers and drop its volume (`docker compose -p <COMPOSE_PROJECT_NAME> down -v`),
+  then delete the symlinks. spec-apply's final report gives both commands.
 
 ### After init
 
@@ -430,7 +502,7 @@ Pending, in order:
    output decides which plugins and skills to prune.
 2. **Evals.** A fixture repo with seeded bugs; run `code-reviewer` headless
    (`claude -p --output-format json`) three times and score bugs found against
-   the bare model. Then `spec-apply` on a task with pre-written tests. Re-run
+   the bare model. Then `spec-apply` on a Story with pre-written tests. Re-run
    after every prompt rewrite of an agent.
 
 Small cleanups:
@@ -452,7 +524,6 @@ structure; adapted ones say in their own file what changed and why.
 | Source | License | What we took |
 |--------|---------|--------------|
 | [mattpocock/skills](https://github.com/mattpocock/skills) | MIT | `tdd`, `diagnose` (upstream now `diagnosing-bugs`), `improve-codebase-architecture` (resynced with commit `49dd158`, read 2026-10-17; reads the `.claude/` tree instead of CONTEXT.md, records rejections in engram instead of ADRs, reports as an Artifact), `grill-me`, and `global/claude-hooks/block-dangerous-git.sh` (from its `git-guardrails-claude-code` skill; the skill wrapper was dropped) |
-| [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) | MIT | `caveman`, copied in May 2026, before upstream moved to Apache-2.0 in 3.0.0. Its license ships in [skills/productivity/caveman/LICENSE](./skills/productivity/caveman/LICENSE). Only change: the `stacks:` field |
 | [emilkowalski/skills](https://github.com/emilkowalski/skills) | MIT | `write-swift`, commit `e8a175d`, read 2026-10-09. Its license ships in [skills/engineering/write-swift/LICENSE](./skills/engineering/write-swift/LICENSE). Only change: the `stacks:` field |
 | [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) | MIT | `android-clean-architecture`. Changes: added the `stacks:` field and the Process section, dropped references to skills we do not have |
 
@@ -474,7 +545,7 @@ structure; adapted ones say in their own file what changed and why.
 [ego-browser](https://github.com/citrolabs/ego-lite),
 [graphify](https://github.com/Graphify-Labs/graphify),
 [ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)
-and the `ponytail` plugin. See [Tooling](#tooling).
+and the `ponytail` and [`i-have-adhd`](https://github.com/ayghri/i-have-adhd) plugins. See [Tooling](#tooling).
 
 ## Key files
 
@@ -487,7 +558,9 @@ and the `ponytail` plugin. See [Tooling](#tooling).
 | `init-dotnet-project.sh` | Same, for .NET Clean Architecture (defaults to `dotnet`) |
 | `global/agents/` | The 7-agent team |
 | `global/githooks/commit-msg` | Commit message hook, referenced via `core.hooksPath` |
-| `global/githooks/post-checkout` | Links the local Claude harness into new worktrees, same `core.hooksPath` |
+| `global/githooks/post-checkout` | Links the local Claude harness and ignored `.env*` files into new worktrees, same `core.hooksPath` |
 | `global/claude-hooks/` | Optional Claude Code hooks, opt-in, referenced from settings |
+| `global/statusline-command.sh` | Statusline, linked by `install-global.sh`; shows the runtime mode |
+| `~/.claude/runtime-mode` | Not in the repo. `light` or `full`, read by spec-apply and spec-verify; missing = `light` |
 | `global/behavior.md` | How the agent writes and acts, linked as `~/.claude/behavior.md` by `install-global.sh` |
 | `PERSISTENT-MEMORY.md` | claude-mem + engram memory guide |
