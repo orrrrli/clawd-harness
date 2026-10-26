@@ -5,7 +5,7 @@ description: "Implement a GitHub Story end to end, across every layer it touches
 trigger: /spec-apply
 ---
 
-# /spec-apply [issue#] (with Ponytail Principles)
+# /spec-apply [issue#] [full|light] (with Ponytail Principles)
 
 Implement a **Story** in **one cycle** through the phases below, covering every layer the Story
 touches. Its **Task sub-issues are the checklist** of that cycle, not separate iterations: they are
@@ -66,10 +66,11 @@ Derivation rules:
 `FS-AUTH-1-T1`, or "list my stories") into a concrete **Story issue number**, its **Epic number**,
 and the **checklist of its open Task sub-issues**. Then set up the Story worktree.
 
-**Runtime mode first:** `cat ~/.claude/runtime-mode 2>/dev/null`. `full` → the slice checks (e2e,
-browser check) run against this worktree's own stack. Anything else, a missing file included, is
-`light` → they are deferred, the Story still ships code and every test that needs no running stack,
-and its PR opens as a draft. State the mode in the Phase 0 exit gate.
+**Runtime mode first:** the last word of `$ARGUMENTS` may be `full` or `light`
+(`/spec-apply 475 full`) → that wins. Otherwise `cat ~/.claude/runtime-mode 2>/dev/null`, where a
+missing file means `full`. `full` → the slice checks (e2e, browser check) run against this
+worktree's own stack. `light` → they are deferred, the Story still ships code and every test that
+needs no running stack, and its PR opens as a draft. State the mode in the Phase 0 exit gate.
 
 **Catch-up (full mode only):** if the Story already has an open draft PR labeled `deferred-checks`
 (`gh pr list --repo <owner/repo> --head feat/<STORY_ID> --label deferred-checks --json number`),
@@ -334,7 +335,8 @@ did not write the code.
    - [ ] Phase 2.5 tests are green and untouched (`git diff -- <test files>` is empty)
    - [ ] No files outside Phase 2 + 2.5 scope were modified
 2. **Independent review**, uncommitted, in ONE message so they run concurrently:
-   - Invoke the `spec-verify` skill with `<SCOPE_ID> --since <test-sha>~1`. It runs in a fresh
+   - Invoke the `spec-verify` skill with `<SCOPE_ID> --since <test-sha>~1`, plus the mode word
+     (`full` or `light`) this run resolved. It runs in a fresh
      `code-reviewer` subagent, reads the Story's AC from GitHub, reviews the test commit plus the
      uncommitted implementation, runs the tests, and returns PASS/FAIL per criterion, including
      the browser check against the real backend on web projects. A Story that skipped Phase 2.5
@@ -426,8 +428,8 @@ Rules:
    merged; only the full-mode catch-up marks it ready.
 
 3. Report done: the PR URL, the tasks closed, and anything left open or for a follow-up. A draft
-   PR ends with: "Slice checks deferred (light mode). Run `/spec-apply <STORY_ID>` with
-   `full` in `~/.claude/runtime-mode` to finish." Close with: "After merge, stop the Story's
+   PR ends with: "Slice checks deferred (light mode). Run `/spec-apply <STORY_ID> full` to
+   finish." Close with: "After merge, stop the Story's
    containers and drop its volume (`docker compose -p <COMPOSE_PROJECT_NAME from .env.worktree>
    down -v`), delete the worktree's harness symlinks, then `git worktree remove <path>`."
 

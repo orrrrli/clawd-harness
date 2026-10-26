@@ -65,8 +65,9 @@ Story (`FS-<EPIC>-<n>`) per feature, and `spec-apply` builds a Story across ever
 layer in one cycle. Never reintroduce a backend-story + frontend-story split or a
 per-task loop.
 
-**Two runtime modes.** `spec-apply` and `spec-verify` read `~/.claude/runtime-mode`
-(`light` | `full`, missing = `light`). `light` starts no stack and defers the e2e
+**Two runtime modes.** A trailing `full` or `light` on `/spec-apply` or `/spec-verify`
+picks the mode for that run; otherwise `~/.claude/runtime-mode` decides, and a missing
+file means `full`. `light` starts no stack and defers the e2e
 and browser checks; `full` runs them on the worktree's own stack from
 `.env.worktree` (written by `global/githooks/post-checkout`). A change to either
 skill's stack steps must keep both modes working.

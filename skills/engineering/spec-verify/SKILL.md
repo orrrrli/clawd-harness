@@ -3,7 +3,7 @@ name: spec-verify
 stacks: [all]
 context: fork
 agent: code-reviewer
-argument-hint: "[task-id | story-id | issue# | path to spec]"
+argument-hint: "[task-id | story-id | issue# | path to spec] [full|light]"
 description: >
   Verify an implementation against its Story's acceptance criteria and the
   code-quality spec, in a fresh code-reviewer subagent. Delivers PASS/FAIL per
@@ -26,6 +26,8 @@ conversation history: everything you need is in this file, the repo, and GitHub.
 - **A Task ID** (`FS-AUTH-1-T1`), **Story ID** (`FS-AUTH-1`) or **issue number** (`#42`),
   from a backlog made by `prd-to-github-backlog`. Titles are `"<ID>: <title>"`;
   a Task's Story is its ID without the trailing `-T<k>`.
+
+A trailing `full` or `light` is the runtime mode for this run (section 4), not part of the ID.
 
 ```bash
 gh repo view --json nameWithOwner,defaultBranchRef \
@@ -80,10 +82,10 @@ under Engineering and Business, mainly `engineering/standards.md`,
 
 ## 4. Run the tests
 
-**Runtime mode.** Read it first: `cat ~/.claude/runtime-mode 2>/dev/null`.
-`full` runs everything below. Anything else, including a missing file, is
-`light`: the machine is shared with other work (simulators, JVM backends), so
-nothing that needs the running stack is started. In `light`:
+**Runtime mode.** The last word of `$ARGUMENTS` may be `full` or `light` (`<SCOPE_ID> full`)
+→ that wins. Otherwise read `cat ~/.claude/runtime-mode 2>/dev/null`, where a missing file
+means `full`. `full` runs everything below. In `light` the machine is shared with other
+work (simulators, JVM backends), so nothing that needs the running stack is started:
 - Skip the e2e test command and the browser check.
 - Mark each criterion that only they can prove `~ DEFERRED (light mode: <e2e |
   browser check> not run)`. A criterion another test already proves keeps its
