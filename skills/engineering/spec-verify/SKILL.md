@@ -123,12 +123,23 @@ for backend-only or API-only criteria.
    not installed, UI not checked)` and go on.
 2. Read `~/.claude/skills/ego-browser/SKILL.md` before writing any script.
    Its API is not Playwright; use only what that file lists.
-3. Start the project's dev server (command from `engineering/testing.md`,
-   else `package.json` scripts) in the background, on a free port.
+3. Start what the criterion needs, in the background:
+   - UI only (no API call behind it): the frontend dev server, command from
+     `engineering/testing.md`, else `package.json` scripts.
+   - A `fullstack` Story, or any criterion whose UI calls the backend: the whole
+     stack (db, backend, frontend) with the "Run the full stack" command from
+     `engineering/testing.md`. Without one, start each part with its own
+     documented command. If neither exists, mark those criteria `~ PARTIAL (full
+     stack start not documented in engineering/testing.md)` and go on. Never
+     point the UI at a mocked API: the check is the real slice.
+   Use the ports the env files set, so the frontend reaches the backend. A port
+   already in use is reported as the reason for `~ PARTIAL`; never kill a
+   process you did not start.
 4. Use one TaskSpace for the whole check. Drive the flow the criterion
    describes, through the UI the user would use. Record the URL, the steps,
    and what the snapshot showed.
-5. Stop the dev server when done.
+5. Stop every process you started when done (`docker compose down` if the full
+   stack command started containers).
 
 A criterion confirmed in the browser counts as ✓ even with no automated test
 for that layer; cite the steps and snapshot as evidence. If the browser shows
