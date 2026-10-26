@@ -154,8 +154,9 @@ Story AC (Given/When/Then, approved)          business-analyst drafts them if mi
   -> Verify      spec-verify reruns the tests and breaks each AC's line to prove its test fails
 ```
 
-**Runtime modes.** `~/.claude/runtime-mode` holds `light` or `full`; a missing file
-is `light`. The statusline shows which one is on.
+**Runtime modes.** `full` unless you say otherwise. The last word of the command picks the
+mode for that one run (`/spec-apply 475 light`, `/spec-verify 475 light`); without it,
+`~/.claude/runtime-mode` decides, and a missing file means `full`.
 
 - `light`, for when the machine is busy with other work (simulators, JVM backends):
   no stack is started. Unit, component and integration tests still run, plus the
@@ -167,7 +168,8 @@ is `light`. The statusline shows which one is on.
   `/spec-apply <STORY_ID>` on a Story with a `deferred-checks` draft only runs the
   slice checks. When they pass, it marks the PR ready and closes the Tasks.
 
-Switch with `echo full > ~/.claude/runtime-mode` (or `light`).
+Change the default with `echo light > ~/.claude/runtime-mode` (or `full`); pass the word on the
+command to override it for one run.
 
 One Story is one cycle across db, backend and frontend. Its Task sub-issues are the checklist
 the plan must cover, and are closed together at the end. An XL Story stops before any code
@@ -210,7 +212,7 @@ phase. `tdd` stays a separate skill for test-first work outside a Story.
   `permissions.deny`/`ask` (see Guardrails). Only adds the missing ones, after
   yours; never removes or reorders a rule.
 - Symlinks `~/.claude/statusline-command.sh` to `global/` (repo, branch, PR,
-  running agent, runtime mode, model, context and rate limits; needs a Nerd Font) and sets
+  running agent, model, context and rate limits; needs a Nerd Font) and sets
   `statusLine` only when none is configured. A `refreshInterval` of `3000` is
   rewritten to `3`, since the value is in seconds.
 - Prints the `claude mcp add` commands for context7 and GitHub. Run them by hand:
@@ -573,7 +575,7 @@ and the `ponytail` and [`i-have-adhd`](https://github.com/ayghri/i-have-adhd) pl
 | `global/githooks/commit-msg` | Commit message hook, referenced via `core.hooksPath` |
 | `global/githooks/post-checkout` | Links the local Claude harness and ignored `.env*` files into new worktrees, same `core.hooksPath` |
 | `global/claude-hooks/` | Optional Claude Code hooks, opt-in, referenced from settings |
-| `global/statusline-command.sh` | Statusline, linked by `harness.sh --global`; shows the runtime mode |
-| `~/.claude/runtime-mode` | Not in the repo. `light` or `full`, read by spec-apply and spec-verify; missing = `light` |
+| `global/statusline-command.sh` | Statusline, linked by `harness.sh --global` |
+| `~/.claude/runtime-mode` | Not in the repo. `light` or `full` default for spec-apply and spec-verify; missing = `full`. A trailing word on the command overrides it for one run |
 | `global/behavior.md` | How the agent writes and acts, linked as `~/.claude/behavior.md` by `harness.sh --global` |
 | `PERSISTENT-MEMORY.md` | claude-mem + engram memory guide |

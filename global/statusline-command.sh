@@ -190,13 +190,6 @@ if [ -n "$agent" ]; then
   parts+=("${CYAN}${agent}${RESET}")
 fi
 
-# Runtime mode for spec-apply/spec-verify (~/.claude/runtime-mode); missing file = light
-if [ "$(cat "$HOME/.claude/runtime-mode" 2>/dev/null)" = "full" ]; then
-  parts+=("${GREEN}full${RESET}")
-else
-  parts+=("${DIM}light${RESET}")
-fi
-
 if [ -n "$model" ]; then
   parts+=("${PURPLE}${ICON_MODEL} ${model}${RESET}")
 fi
