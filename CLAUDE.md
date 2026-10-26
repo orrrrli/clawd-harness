@@ -30,7 +30,7 @@ architect must live at user level. `claude-design` (a shell alias for
 ## Commands
 
 ```bash
-./init-project.sh <dir> --stack=all|web|dotnet|android|ios
+./init-project.sh <dir> --stack=all|web|dotnet|android|ios   # or a list: --stack=web,dotnet
 ./init-dotnet-project.sh <dir>
 bash -n init-project.sh              # syntax check
 ```

@@ -4,37 +4,51 @@
 STACK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTNET_SKILLS_DIR="$HOME/dev/oss/dotnet-clean-architecture-skills"
 # Parse args: optional target dir, plus --stack=all|web|dotnet|android
+# or a comma list (--stack=dotnet,web) for a monorepo; `all` cannot be combined.
 STACK="dotnet"
 POSITIONAL=()
 for arg in "$@"; do
     case "$arg" in
         --stack=*) STACK="${arg#--stack=}" ;;
         -h|--help)
-            echo "usage: init-dotnet-project.sh [target-dir] [--stack=all|web|dotnet|android]"
+            echo "usage: init-dotnet-project.sh [target-dir] [--stack=all|web|dotnet|android[,...]]"
             exit 0 ;;
         *) POSITIONAL+=("$arg") ;;
     esac
 done
-case "$STACK" in
-    all|web|dotnet|android) ;;
-    *) echo "ERROR: Unknown stack '$STACK'. Use: all, web, dotnet, android"; exit 1 ;;
-esac
+STACKS=(${STACK//,/ })
+[ ${#STACKS[@]} -gt 0 ] || { echo "ERROR: Empty --stack."; exit 1; }
+for s in "${STACKS[@]}"; do
+    case "$s" in
+        web|dotnet|android) ;;
+        all) [ ${#STACKS[@]} -eq 1 ] || { echo "ERROR: 'all' cannot be combined with other stacks."; exit 1; } ;;
+        *) echo "ERROR: Unknown stack '$s'. Use: all, web, dotnet, android (comma-separated)"; exit 1 ;;
+    esac
+done
+
+# Returns 0 if $1 is one of the requested stacks.
+has_stack() {
+    local s
+    for s in "${STACKS[@]}"; do [ "$s" = "$1" ] && return 0; done
+    return 1
+}
 
 TARGET_DIR="${POSITIONAL[0]:-$(pwd)}"
 PROJECT_NAME="$(basename "$TARGET_DIR")"
 
 # --- stack filtering -------------------------------------------------------
-# Returns 0 if the file's `stacks:` frontmatter includes $STACK (or "all").
+# Returns 0 if the file's `stacks:` frontmatter includes any requested stack (or "all").
 stack_match() {
-    [ "$STACK" = "all" ] && return 0
-    local line
+    has_stack all && return 0
+    local line s
     # -a: some SKILL.md files contain stray control bytes, and without it grep
     # answers "Binary file ... matches" instead of the line.
     line="$(grep -a -m1 '^stacks: \[' "$1")" || return 1
-    case "$line" in
-        *all*|*"$STACK"*) return 0 ;;
-        *) return 1 ;;
-    esac
+    case "$line" in *all*) return 0 ;; esac
+    for s in "${STACKS[@]}"; do
+        case "$line" in *"$s"*) return 0 ;; esac
+    done
+    return 1
 }
 
 # Symlinks every matching skill into $1.

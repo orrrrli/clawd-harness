@@ -301,6 +301,9 @@ context tree, the gitignore entries, and the commit-msg hook in one pass.
 
 # iOS / SwiftUI project
 ~/dev/personal/clawd-harness/init-project.sh ~/dev/my-app --stack=ios
+
+# Monorepo: .NET API + React frontend
+~/dev/personal/clawd-harness/init-project.sh ~/dev/my-app --stack=web,dotnet
 ```
 
 ### `--stack`: install only what the project needs
@@ -316,6 +319,11 @@ script links only the matching ones. An Android project has no use for
 | `android` | 13 |
 | `ios`     | 15 |
 | `all`     | 19 |
+| `web,dotnet` | 15 (union) |
+
+A monorepo passes a comma list (`--stack=web,dotnet` for a .NET API and a React
+frontend in one repo) and gets the union of those stacks, plus the web-only
+settings (pnpm) when `web` is in the list. `all` cannot be combined.
 
 Omitting the flag installs everything (`all`); `init-dotnet-project.sh` defaults
 to `dotnet`. It also links the external repo `~/dev/oss/dotnet-clean-architecture-skills`
