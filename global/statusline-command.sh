@@ -53,12 +53,12 @@ rate_color() {
   fi
 }
 
-# Context bar: teal, orange from 50% (warm vs cold so the jump is visible), cyan alert at 80%
+# Context bar: green, orange from 50%, red alert at 80%
 ctx_color() {
   local pct=$1
-  if [ "$pct" -ge 80 ]; then   printf '\033[38;2;61;214;255m'
+  if [ "$pct" -ge 80 ]; then   printf '%s' "$RED"
   elif [ "$pct" -ge 50 ]; then printf '%s' "$ORANGE"
-  else                          printf '\033[38;2;115;218;202m'
+  else                          printf '%s' "$GREEN"
   fi
 }
 
