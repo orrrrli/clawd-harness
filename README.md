@@ -1,6 +1,6 @@
 # AI Engineering Stack
 
-A personal Claude Code harness: a 7-agent team, 19 skills and the scripts that
+A personal Claude Code harness: a 7-agent team, 18 skills and the scripts that
 wire them into any project. Clone it once, run one script per machine and one
 per project, and every Claude Code session works the same way, with the same
 rules, the same reviewers and the same delivery loop.
@@ -81,7 +81,7 @@ lose ponytail in its subagents.
 
 ### Skills
 
-19 skills across 3 categories. Each category directory has its own README:
+18 skills across 3 categories. Each category directory has its own README:
 [engineering](./skills/engineering/README.md), [ui](./skills/ui/README.md),
 [productivity](./skills/productivity/README.md).
 The **Origin** column is detailed in [Credits and sources](#credits-and-sources).
@@ -106,9 +106,13 @@ The **Origin** column is detailed in [Credits and sources](#credits-and-sources)
 | **grill-me** | all | Interviews you about a plan until every branch is resolved | mattpocock/skills |
 | **handoff** | all | Session handoff document, copied to the clipboard | Own |
 | **blind-pick** | all | Options for a hard-to-reverse decision argue against each other; blind judges pick the winner | Own |
-| **caveman** | all | Ultra-compressed replies, ~75% fewer tokens | JuliusBrussee/caveman |
 
-`ponytail` is no longer vendored here. It is installed as a Claude Code plugin.
+`ponytail` and `i-have-adhd` are not vendored here. They are installed as Claude
+Code plugins, so they update from upstream; neither reaches cloud sessions.
+`i-have-adhd` ([ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd), MIT)
+shapes replies for an ADHD reader: next action first, numbered steps, state
+restated every turn. Invoke it with `/i-have-adhd`; `stop adhd mode` turns it off.
+It replaced the vendored `caveman`.
 
 #### From PRD to merged slice
 
@@ -351,12 +355,12 @@ script links only the matching ones. An Android project has no use for
 
 | `--stack` | skills |
 |-----------|--------|
-| `web`     | 13 |
-| `dotnet`  | 14 |
-| `android` | 13 |
-| `ios`     | 15 |
-| `all`     | 19 |
-| `web,dotnet` | 15 (union) |
+| `web`     | 12 |
+| `dotnet`  | 13 |
+| `android` | 12 |
+| `ios`     | 14 |
+| `all`     | 18 |
+| `web,dotnet` | 14 (union) |
 
 A monorepo passes a comma list (`--stack=web,dotnet` for a .NET API and a React
 frontend in one repo) and gets the union of those stacks, plus the web-only
@@ -520,7 +524,6 @@ structure; adapted ones say in their own file what changed and why.
 | Source | License | What we took |
 |--------|---------|--------------|
 | [mattpocock/skills](https://github.com/mattpocock/skills) | MIT | `tdd`, `diagnose` (upstream now `diagnosing-bugs`), `improve-codebase-architecture` (resynced with commit `49dd158`, read 2026-10-17; reads the `.claude/` tree instead of CONTEXT.md, records rejections in engram instead of ADRs, reports as an Artifact), `grill-me`, and `global/claude-hooks/block-dangerous-git.sh` (from its `git-guardrails-claude-code` skill; the skill wrapper was dropped) |
-| [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) | MIT | `caveman`, copied in May 2026, before upstream moved to Apache-2.0 in 3.0.0. Its license ships in [skills/productivity/caveman/LICENSE](./skills/productivity/caveman/LICENSE). Only change: the `stacks:` field |
 | [emilkowalski/skills](https://github.com/emilkowalski/skills) | MIT | `write-swift`, commit `e8a175d`, read 2026-10-09. Its license ships in [skills/engineering/write-swift/LICENSE](./skills/engineering/write-swift/LICENSE). Only change: the `stacks:` field |
 | [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) | MIT | `android-clean-architecture`. Changes: added the `stacks:` field and the Process section, dropped references to skills we do not have |
 
@@ -542,7 +545,7 @@ structure; adapted ones say in their own file what changed and why.
 [ego-browser](https://github.com/citrolabs/ego-lite),
 [graphify](https://github.com/Graphify-Labs/graphify),
 [ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)
-and the `ponytail` plugin. See [Tooling](#tooling).
+and the `ponytail` and [`i-have-adhd`](https://github.com/ayghri/i-have-adhd) plugins. See [Tooling](#tooling).
 
 ## Key files
 
