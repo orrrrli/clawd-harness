@@ -61,6 +61,17 @@ silently dropped from every filtered install.
 Agents in `global/agents/` have no `stacks:`. Nothing filters them; every
 machine gets the whole team.
 
+**Delivery is vertical slices.** `prd-to-github-backlog` writes one `fullstack`
+Story (`FS-<EPIC>-<n>`) per feature, and `spec-apply` builds a Story across every
+layer in one cycle. Never reintroduce a backend-story + frontend-story split or a
+per-task loop.
+
+**Two runtime modes.** `spec-apply` and `spec-verify` read `~/.claude/runtime-mode`
+(`light` | `full`, missing = `light`). `light` starts no stack and defers the e2e
+and browser checks; `full` runs them on the worktree's own stack from
+`.env.worktree` (written by `global/githooks/post-checkout`). A change to either
+skill's stack steps must keep both modes working.
+
 **Claude Code only.** Support for Windsurf and OpenCode was removed; do not
 reintroduce `.windsurf/`, `.opencode/` or their rules files.
 

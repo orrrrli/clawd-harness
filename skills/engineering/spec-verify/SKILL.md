@@ -8,7 +8,7 @@ description: >
   Verify an implementation against its Story's acceptance criteria and the
   code-quality spec, in a fresh code-reviewer subagent. Delivers PASS/FAIL per
   criterion with file:line evidence, after running the project's own tests.
-  Report only: never fixes, never closes issues. Use after implementing a task,
+  Report only: never fixes, never closes issues. Use after implementing a Story or task,
   when the user says "verify this", "does this match the spec", "spec-verify",
   and from spec-apply Phase 4.
 ---

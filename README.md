@@ -89,8 +89,8 @@ The **Origin** column is detailed in [Credits and sources](#credits-and-sources)
 | Skill | Stacks | What it does | Origin |
 |-------|--------|--------------|--------|
 | **spec-apply** | all | Implements a GitHub Story across every layer in one cycle (its Tasks are the checklist): explore, propose, failing tests, apply, verify, commit, PR | Own |
-| **spec-verify** | all | Checks an implementation against its acceptance criteria in a fresh code-reviewer, with a mutation check | Own |
-| **prd-to-github-backlog** | all | PRD to GitHub Project: epics, stories, tasks, sprints, estimates | Own |
+| **spec-verify** | all | Checks an implementation against its acceptance criteria in a fresh code-reviewer, with a mutation check and, in full mode, a browser check against the real stack | Own |
+| **prd-to-github-backlog** | all | PRD to GitHub Project: epics, vertical-slice (`fullstack`) stories, tasks per area, sprints, estimates | Own |
 | **fill-context** | all | Scans the codebase and interviews you to write the `.claude/` context tree | Own |
 | **prompt-rewrite** | all | Audits a skill, agent or prompt against Anthropic's prompting docs | Adapted |
 | **tdd** | all | Red-green-refactor loop | mattpocock/skills |
@@ -109,6 +109,28 @@ The **Origin** column is detailed in [Credits and sources](#credits-and-sources)
 | **caveman** | all | Ultra-compressed replies, ~75% fewer tokens | JuliusBrussee/caveman |
 
 `ponytail` is no longer vendored here. It is installed as a Claude Code plugin.
+
+#### From PRD to merged slice
+
+Work is cut in vertical slices: one Story is one behavior the user can use, built
+across db, backend and frontend together. The spec is that Story's Given/When/Then
+acceptance criteria on GitHub.
+
+```
+PRD
+  -> prd-to-github-backlog   Epics -> fullstack Stories (FS-<EPIC>-<n>) -> Tasks, each with its area
+  -> spec-apply <STORY>      one worktree, one cycle across every layer, two commits (red tests, code)
+  -> spec-verify             AC, code quality, mutation check; e2e + browser check on the real stack
+  -> one PR per Story        draft with deferred-checks in light mode, ready after a full-mode run
+```
+
+- A feature is one `fullstack` Story, never a backend Story plus a frontend Story.
+  `backend`/`frontend` Stories are only for work with no other side (foundation, a job).
+- Every `fullstack` Story has at least one criterion the user observes in the UI.
+- A Story bigger than L is split into thinner slices by behavior (email sign-in, then
+  OAuth), never by layer. spec-apply refuses an XL Story.
+- Design Stories stay separate: they run in a `claude-design` session.
+- All of it lives in one GitHub Project. Filter by `area:*` labels to see one layer.
 
 #### How spec-apply writes code
 
@@ -155,7 +177,7 @@ spec-verify reviews.
 4. **Passing is not enough.** For each AC, `spec-verify` breaks the implementing line once in
    a scratch worktree. A test that stays green marks the AC `~ PARTIAL`, and the Story fails.
 
-Tasks with no testable behavior (config, scaffolding) say so in Propose and skip the Tests
+Stories with no testable behavior (config, scaffolding) say so in Propose and skip the Tests
 phase. `tdd` stays a separate skill for test-first work outside a Story.
 
 ## Global layer (once per machine)
@@ -178,7 +200,7 @@ phase. `tdd` stays a separate skill for test-first work outside a Story.
   `permissions.deny`/`ask` (see Guardrails). Only adds the missing ones, after
   yours; never removes or reorders a rule.
 - Symlinks `~/.claude/statusline-command.sh` to `global/` (repo, branch, PR,
-  running agent, model, context and rate limits; needs a Nerd Font) and sets
+  running agent, runtime mode, model, context and rate limits; needs a Nerd Font) and sets
   `statusLine` only when none is configured. A `refreshInterval` of `3000` is
   rewritten to `3`, since the value is in seconds.
 - Prints the `claude mcp add` commands for context7 and GitHub. Run them by hand:
@@ -397,7 +419,9 @@ get no file.
 
 - A `.claude/` ignore rule with a trailing slash does not match the symlink, so
   git sees it as untracked. Write the rule as `.claude`, without the slash.
-- Delete the symlinks before `git worktree remove`.
+- Git has no hook for `git worktree remove`. Before it, stop the Story's
+  containers and drop its volume (`docker compose -p <COMPOSE_PROJECT_NAME> down -v`),
+  then delete the symlinks. spec-apply's final report gives both commands.
 
 ### After init
 
@@ -474,7 +498,7 @@ Pending, in order:
    output decides which plugins and skills to prune.
 2. **Evals.** A fixture repo with seeded bugs; run `code-reviewer` headless
    (`claude -p --output-format json`) three times and score bugs found against
-   the bare model. Then `spec-apply` on a task with pre-written tests. Re-run
+   the bare model. Then `spec-apply` on a Story with pre-written tests. Re-run
    after every prompt rewrite of an agent.
 
 Small cleanups:
@@ -533,5 +557,7 @@ and the `ponytail` plugin. See [Tooling](#tooling).
 | `global/githooks/commit-msg` | Commit message hook, referenced via `core.hooksPath` |
 | `global/githooks/post-checkout` | Links the local Claude harness and ignored `.env*` files into new worktrees, same `core.hooksPath` |
 | `global/claude-hooks/` | Optional Claude Code hooks, opt-in, referenced from settings |
+| `global/statusline-command.sh` | Statusline, linked by `install-global.sh`; shows the runtime mode |
+| `~/.claude/runtime-mode` | Not in the repo. `light` or `full`, read by spec-apply and spec-verify; missing = `light` |
 | `global/behavior.md` | How the agent writes and acts, linked as `~/.claude/behavior.md` by `install-global.sh` |
 | `PERSISTENT-MEMORY.md` | claude-mem + engram memory guide |
