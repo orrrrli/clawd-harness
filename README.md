@@ -1,6 +1,6 @@
 # AI Engineering Stack
 
-A personal Claude Code harness: a 7-agent team, 18 skills and the scripts that
+A personal Claude Code harness: a 7-agent team, 19 skills and the scripts that
 wire them into any project. Clone it once, run one script per machine and one
 per project, and every Claude Code session works the same way, with the same
 rules, the same reviewers and the same delivery loop.
@@ -81,7 +81,7 @@ lose ponytail in its subagents.
 
 ### Skills
 
-18 skills across 3 categories. Each category directory has its own README:
+19 skills across 3 categories. Each category directory has its own README:
 [engineering](./skills/engineering/README.md), [ui](./skills/ui/README.md),
 [productivity](./skills/productivity/README.md).
 The **Origin** column is detailed in [Credits and sources](#credits-and-sources).
@@ -92,6 +92,7 @@ The **Origin** column is detailed in [Credits and sources](#credits-and-sources)
 | **spec-verify** | all | Checks an implementation against its acceptance criteria in a fresh code-reviewer, with a mutation check and, in full mode, a browser check against the real stack | Own |
 | **prd-to-github-backlog** | all | PRD to GitHub Project: epics, vertical-slice (`fullstack`) stories, tasks per area, sprints, estimates | Own |
 | **fill-context** | all | Scans the codebase and interviews you to write the `.claude/` context tree | Own |
+| **context-sync** | all | Proposes moving the engram notes saved since the last run into the `.claude/` context files, one approved diff per file | Own |
 | **prompt-rewrite** | all | Audits a skill, agent or prompt against Anthropic's prompting docs | Adapted |
 | **tdd** | all | Red-green-refactor loop | mattpocock/skills |
 | **diagnose** | all | Reproduce, minimise, hypothesise, instrument, fix, regression-test | mattpocock/skills |
@@ -195,7 +196,7 @@ phase. `tdd` stays a separate skill for test-first work outside a Story.
 - Symlinks `~/.claude/behavior.md` to `global/behavior.md`. An existing file is
   moved to `behavior.md.bak-<timestamp>`. Prints a hint when `~/.claude/CLAUDE.md`
   has no `@behavior.md` line to load it.
-- Symlinks the skills every session needs into `~/.claude/skills`: fill-context,
+- Symlinks the skills every session needs into `~/.claude/skills`: context-sync, fill-context,
   prd-to-github-backlog, prompt-rewrite, spec-apply, spec-verify, blind-pick, grill-me, handoff. Stale links
   are replaced; a real directory with the same name is skipped.
 - Sets `"agent": "software-architect"` in `~/.claude/settings.json` with `jq`,

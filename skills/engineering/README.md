@@ -4,6 +4,7 @@ Code-specific skills: architecture audits, spec-driven delivery, testing and deb
 
 - **[android-clean-architecture](./android-clean-architecture/SKILL.md)** — Clean Architecture patterns for Android and Kotlin Multiplatform projects: module structure, dependency rules, UseCases, Repositories, and data layer patterns.
 - **[audit-layer-boundaries](./audit-layer-boundaries/SKILL.md)** — Scan the codebase for the three architectural violations that break the layer contract in this project.
+- **[context-sync](./context-sync/SKILL.md)** — Promote the engram notes saved since the last sync into the project's CLAUDE.md and .claude/ files, one approved diff per file, so the context files stay the source of truth.
 - **[diagnose](./diagnose/SKILL.md)** — Disciplined diagnosis loop for hard bugs and performance regressions. Reproduce → minimise → hypothesise → instrument → fix → regression-test.
 - **[dotnet-clean-architecture](./dotnet-clean-architecture/SKILL.md)** — Scan a .NET Clean Architecture solution for the five violations that break the dependency rule.
 - **[fill-context](./fill-context/SKILL.md)** — Build or regenerate the full .claude/ context tree by scanning the codebase and grilling the developer on what can't be inferred from code alone.
