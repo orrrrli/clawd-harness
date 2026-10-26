@@ -362,6 +362,24 @@ env files too (`.env`, `.env.local`, `apps/api/.env`, any `.env.*`), so the app
 starts in the worktree for e2e tests and the browser check. A tracked
 `.env.example` is already there and is left alone.
 
+It also writes `.env.worktree` (never linked, excluded through `.git/info/exclude`)
+with a slot of its own, ports that are free on the whole machine, and a compose
+project name, so 2-3 Story stacks run side by side in full mode:
+
+```
+COMPOSE_PROJECT_NAME=<repo>-feat-fs-auth-1   # own containers and Postgres volume
+WT_SLOT=1
+WT_DB_PORT=15433    # 15432 + slot
+WT_API_PORT=18001   # 18000 + slot
+WT_WEB_PORT=13001   # 13000 + slot
+```
+
+A slot whose ports are taken (a work project's Postgres, another worktree) is
+skipped. The project reads the values with defaults, so the main checkout keeps
+its usual ports: `"${WT_DB_PORT:-5432}:5432"` in compose, `${WT_API_PORT:-5000}`
+in the API's port setting. Detached worktrees (spec-verify's scratch copies)
+get no file.
+
 - A `.claude/` ignore rule with a trailing slash does not match the symlink, so
   git sees it as untracked. Write the rule as `.claude`, without the slash.
 - Delete the symlinks before `git worktree remove`.
