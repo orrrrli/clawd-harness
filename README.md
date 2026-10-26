@@ -123,6 +123,21 @@ Story AC (Given/When/Then, approved)          business-analyst drafts them if mi
   -> Verify      spec-verify reruns the tests and breaks each AC's line to prove its test fails
 ```
 
+**Runtime modes.** `~/.claude/runtime-mode` holds `light` or `full`; a missing file
+is `light`. The statusline shows which one is on.
+
+- `light`, for when the machine is busy with other work (simulators, JVM backends):
+  no stack is started. Unit, component and integration tests still run, plus the
+  review and the mutation check. The e2e test and the browser check are marked
+  `~ DEFERRED`, and the Story's PR opens as a draft labeled `deferred-checks`, with
+  its Tasks still open.
+- `full`: each Story worktree runs its own stack (its own Postgres container and
+  ports, from `.env.worktree`), so 2-3 Stories verify in parallel. Running
+  `/spec-apply <STORY_ID>` on a Story with a `deferred-checks` draft only runs the
+  slice checks. When they pass, it marks the PR ready and closes the Tasks.
+
+Switch with `echo full > ~/.claude/runtime-mode` (or `light`).
+
 One Story is one cycle across db, backend and frontend. Its Task sub-issues are the checklist
 the plan must cover, and are closed together at the end. An XL Story stops before any code
 with a proposed split into thinner slices, since the Story's size is the size of the diff
