@@ -46,7 +46,7 @@ CLAUDE.md                    # Main index — auto-loaded every session, at the 
 │   └── [entity].md          # One file per main domain entity
 └── engineering/
     ├── standards.md         # Coding conventions and patterns
-    └── testing.md           # Test strategy and commands
+    └── testing.md           # Test strategy, commands, full-stack start, e2e
 ```
 
 ---
@@ -160,7 +160,7 @@ generate it fresh with this shape:
 
 ## Engineering
 - [Standards](.claude/engineering/standards.md) — Coding conventions and patterns
-- [Testing](.claude/engineering/testing.md) — Test strategy and commands
+- [Testing](.claude/engineering/testing.md) — Test strategy, commands, full-stack start, e2e
 ```
 
 Note all links are relative to the repo root (`.claude/business/...`), not to `.claude/` itself.
@@ -292,9 +292,24 @@ Note all links are relative to the repo root (`.claude/business/...`), not to `.
 ## Commands
 [From package.json scripts — exact commands to run tests]
 
+## Run the full stack
+[One command that starts db, backend and frontend together, from docker-compose
+files, Makefile, Procfile or package.json scripts. Then the URL and port of each
+part, and how the frontend finds the backend (env var name). If parts start
+separately, one command per part in start order. spec-verify's browser check runs
+against this.]
+
+## E2E command
+[The e2e runner (Playwright, Cypress, ...) and its exact command, from its config
+file and scripts. If the project has none, write "None" — spec-apply then asks
+before adding one.]
+
 ## Strategy
 [Inferred from test file structure and config — unit, integration, e2e]
 ```
+
+If the full-stack start or the e2e command cannot be inferred from the code, ask
+for them in Phase 2 (within its question limit): spec-apply and spec-verify depend on both for fullstack Stories.
 
 ---
 
