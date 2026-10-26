@@ -440,9 +440,10 @@ get no file.
 
 - A `.claude/` ignore rule with a trailing slash does not match the symlink, so
   git sees it as untracked. Write the rule as `.claude`, without the slash.
-- Git has no hook for `git worktree remove`. Before it, stop the Story's
-  containers and drop its volume (`docker compose -p <COMPOSE_PROJECT_NAME> down -v`),
-  then delete the symlinks. spec-apply's final report gives both commands.
+- Git has no hook for `git worktree remove`, and Orca does not stop containers. Before
+  deleting a Story worktree, stop its containers and drop its volume
+  (`docker compose -p <COMPOSE_PROJECT_NAME> down -v`). spec-apply's final report gives
+  the command after a full-mode run.
 
 ### After init
 

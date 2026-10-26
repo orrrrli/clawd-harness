@@ -429,9 +429,10 @@ Rules:
 
 3. Report done: the PR URL, the tasks closed, and anything left open or for a follow-up. A draft
    PR ends with: "Slice checks deferred (light mode). Run `/spec-apply <STORY_ID> full` to
-   finish." Close with: "After merge, stop the Story's
-   containers and drop its volume (`docker compose -p <COMPOSE_PROJECT_NAME from .env.worktree>
-   down -v`), delete the worktree's harness symlinks, then `git worktree remove <path>`."
+   finish." Only if this run started the Story's stack (full mode), close with: "After merge,
+   stop the Story's containers and drop its volume (`docker compose -p <COMPOSE_PROJECT_NAME from
+   .env.worktree> down -v`) before deleting the worktree." Never give commands to remove the
+   worktree, its symlinks or its branch; the user removes them from Orca.
 
 ---
 
