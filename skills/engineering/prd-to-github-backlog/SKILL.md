@@ -47,8 +47,15 @@ sub-issue linking is skipped automatically (GitHub doesn't support it). Tasks in
 Write `manifest.json` per `references/manifest-schema.md`. Methodology:
 
 - **Epics by feature / FR**, each tagged with its `phase` and a `size` (S/M/L) and `sprint`.
-- Each feature epic gets **backend + frontend** stories; add **design (UX/UI)**, **QA**, and **security**
-  stories where there's real work; put **devops** on the foundation + launch epics.
+- Each feature epic gets **vertical-slice `fullstack` stories** (`FS-<EPIC>-<n>`): one story carries the
+  API and the UI for one user-visible behavior, so `spec-apply` builds both in one cycle and one PR,
+  with the frontend and backend following the same approved contract. Never split a feature into a backend story and a
+  frontend story. Every `fullstack` story has at least one acceptance criterion the user observes
+  in the UI ("Then sees the dashboard"), not only API outcomes. Give each task its own `area` (`backend` tasks first, then `frontend`). A slice
+  bigger than L is split into thinner slices (email login, then OAuth), never by layer.
+  Use `backend`/`frontend` stories only for work with no other side (foundation, a job, a pure UI
+  refactor). Add **design (UX/UI)**, **QA**, and **security** stories where there's real work; put
+  **devops** on the foundation + launch epics.
 - **Story titles are short imperative phrases** (≤ ~60 chars, e.g. "Add HasAscvd + pregnancy dates to Patient"). The full user-story intent lives in the
   **Given/When/Then** acceptance criteria — do not put "As a … I want … so that …" in the title, it makes issue names unreadable. Epics and tasks are
   already short imperative / noun phrases; keep them so. Stories carry an `estimate` (XS–XL → points 1/2/3/5/8). Cite real screen IDs / workflow IDs / NFR targets.

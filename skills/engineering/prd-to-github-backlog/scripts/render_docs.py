@@ -19,7 +19,7 @@ import re
 import sys
 from collections import Counter, defaultdict
 
-AREA_ORDER = ["backend", "frontend", "design", "qa", "security", "devops",
+AREA_ORDER = ["fullstack", "backend", "frontend", "design", "qa", "security", "devops",
               "data", "mobile"]
 POINTS = {"XS": 1, "S": 2, "M": 3, "L": 5, "XL": 8}
 START = "<!-- BACKLOG:START -->"
@@ -168,12 +168,12 @@ def render_summary(m, backlog_link):
              f"(**{total} issues**). Full detail (acceptance criteria, tasks, sprint "
              f"plan, traceability) lives in {backlog_link}.\n",
              "| Epic | FR | Ph | Spr | Size | "
-             + " | ".join(a[:3].upper() for a in AREA_ORDER[:6]) + " | Tasks |\n"
-             + "|---|---|---|---|---|" + "|".join(["---"] * 6) + "|---|"]
+             + " | ".join(a[:3].upper() for a in AREA_ORDER[:7]) + " | Tasks |\n"
+             + "|---|---|---|---|---|" + "|".join(["---"] * 7) + "|---|"]
     for e in m["epics"]:
         st = e["stories"]
         nt = sum(len(s["tasks"]) for s in st)
-        counts_by = [str(sum(1 for s in st if s["area"] == a)) for a in AREA_ORDER[:6]]
+        counts_by = [str(sum(1 for s in st if s["area"] == a)) for a in AREA_ORDER[:7]]
         lines.append(f"| {e['id']} {e['title']} | {e.get('fr', '')} | "
                      f"{e.get('phase', '')} | {e.get('sprint', '')} | {e.get('size', '')} | "
                      + " | ".join(counts_by) + f" | {nt} |")

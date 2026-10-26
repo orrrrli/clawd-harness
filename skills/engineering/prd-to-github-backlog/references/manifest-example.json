@@ -56,24 +56,22 @@
       "summary": "Provider sign-in and profile bootstrap.",
       "stories": [
         {
-          "id": "BE-AUTH-1",
-          "area": "backend",
-          "estimate": "M",
-          "title": "Wire providers + profile bootstrap",
-          "acceptance_criteria": ["Given a new user, When auth succeeds, Then a profile row exists."],
-          "screens": [],
-          "depends_on": ["BE-FOUND-1"],
-          "tasks": ["Configure OAuth providers", "handle_new_user trigger"]
-        },
-        {
-          "id": "FE-AUTH-1",
-          "area": "frontend",
-          "estimate": "M",
-          "title": "Auth screens (splash + sign-in)",
-          "acceptance_criteria": ["Given a valid session, When the app loads, Then it routes home."],
+          "id": "FS-AUTH-1",
+          "area": "fullstack",
+          "estimate": "L",
+          "title": "Sign in with a provider",
+          "acceptance_criteria": [
+            "Given a new user, When auth succeeds, Then a profile row exists.",
+            "Given a valid session, When the app loads, Then it routes home."
+          ],
           "screens": ["ON-1", "ON-2"],
-          "depends_on": [],
-          "tasks": ["Splash ON-1", "Auth ON-2"]
+          "depends_on": ["BE-FOUND-1"],
+          "tasks": [
+            {"title": "Configure OAuth providers", "area": "backend"},
+            {"title": "handle_new_user trigger", "area": "backend"},
+            {"title": "Splash ON-1", "area": "frontend"},
+            {"title": "Auth ON-2", "area": "frontend"}
+          ]
         },
         {
           "id": "UX-AUTH-1",

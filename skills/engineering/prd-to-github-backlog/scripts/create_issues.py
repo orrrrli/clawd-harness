@@ -29,7 +29,7 @@ LINK_SLEEP = 0.5     # after sub-issue link / project add / field set
 MAX_RETRIES = 6
 
 LABEL_COLORS = {
-    "type": "5319e7", "area:backend": "1d76db", "area:frontend": "0e8a16",
+    "type": "5319e7", "area:fullstack": "006b75", "area:backend": "1d76db", "area:frontend": "0e8a16",
     "area:design": "cc88dd", "area:qa": "00b8a9", "area:security": "b60205",
     "area:devops": "0052cc", "area:data": "5319e7", "area:mobile": "0e8a16",
     "fr": "fbca04", "phase": "d4c5f9", "epic": "c2e0c6",

@@ -41,8 +41,8 @@ derived docs or GitHub — change the manifest and re-run.
 
 ```jsonc
 {
-  "id": "BE-AUTH-1",          // required, unique. Convention: <AREA>-<EPIC>-<n>
-  "area": "backend",          // backend|frontend|design|qa|security|devops|data|mobile
+  "id": "FS-AUTH-1",          // required, unique. Convention: <AREA>-<EPIC>-<n> (FS = fullstack)
+  "area": "fullstack",        // fullstack|backend|frontend|design|qa|security|devops|data|mobile
   "repo": "owner/name",       // optional — override global repo for this story and its tasks.
                               // Use when backend/frontend stories live in separate repositories.
                               // Cross-repo sub-issue linking is skipped (GitHub doesn't support it).
@@ -51,17 +51,23 @@ derived docs or GitHub — change the manifest and re-run.
   "acceptance_criteria": ["Given ..., When ..., Then ..."],
   "screens": ["ON-3", "ON-4"],   // optional — UX screen IDs this delivers
   "depends_on": ["BE-FOUND-2"],  // optional — story ids
-  "tasks": ["Configure provider", "handle_new_user trigger"]  // list[str]
+  "tasks": [                     // list[str | {title, area}]
+    {"title": "Add POST /auth/login", "area": "backend"},
+    {"title": "Sign-in screen ON-2", "area": "frontend"}
+  ]
 }
 ```
 
-Tasks are plain strings; `create_issues.py`/`render_docs.py` auto-assign task
-ids `<story-id>-T<k>` and inherit the story's area + repo + the epic's sprint.
+A task is a plain string or a `{title, area}` object; `create_issues.py`/`render_docs.py`
+auto-assign task ids `<story-id>-T<k>`. A task inherits the story's repo, the epic's
+sprint, and the story's area unless it sets its own. `fullstack` stories set `area` on
+every task, `backend` tasks first.
 
 ## Conventions that make a good backlog
 
 - **Epics by feature / FR**, each tagged with its phase.
-- Every feature epic carries **backend + frontend** stories; add **design (UX/UI),
+- Every feature epic carries **vertical-slice `fullstack` stories** (API + UI of one
+  behavior in one story), never a backend story plus a frontend story; add **design (UX/UI),
   QA, and security** where there's real work, and **devops** on the foundation +
   launch epics.
 - Acceptance criteria use **Given / When / Then**.

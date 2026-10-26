@@ -23,7 +23,7 @@ conversation history: everything you need is in this file, the repo, and GitHub.
 `$ARGUMENTS` is one of:
 
 - **A path to a spec file**: read the acceptance criteria from it.
-- **A Task ID** (`BE-AUTH-1-T1`), **Story ID** (`BE-AUTH-1`) or **issue number** (`#42`),
+- **A Task ID** (`FS-AUTH-1-T1`), **Story ID** (`FS-AUTH-1`) or **issue number** (`#42`),
   from a backlog made by `prd-to-github-backlog`. Titles are `"<ID>: <title>"`;
   a Task's Story is its ID without the trailing `-T<k>`.
 
@@ -54,7 +54,10 @@ git diff HEAD                  # uncommitted: the task in progress
 git diff <BASE>...HEAD         # committed on this branch
 ```
 
-If the working tree has changes, review those (the current task). If it is
+If `$ARGUMENTS` carries `--since <sha>`, review `git diff <sha>`: everything
+committed after that SHA plus the uncommitted work (spec-apply passes the commit
+before the Story's red tests, so the tests are reviewed with their implementation).
+Otherwise, if the working tree has changes, review those (the work in progress). If it is
 clean, review `<BASE>...HEAD`. Read every changed file in full, not only the hunks.
 
 **In scope** = the lines that implement this Story/Task. If the diff also carries
@@ -65,7 +68,8 @@ Judge an in-scope line by what it does to the product, not only against the AC.
 If it breaks behavior that worked on the base, or leaves the Story's feature
 unreachable from the product's real entry points (API, UI), it is [blocking]
 even when every criterion passes as written. The missing piece may live outside
-the diff; the in-scope line that depends on it is what blocks.
+the diff; the in-scope line that depends on it is what blocks. A `fullstack`
+Story (`FS-` ID) must work from the UI against the real backend.
 
 ## 3. Load the project's rules
 
