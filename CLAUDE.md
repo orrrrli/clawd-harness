@@ -16,7 +16,7 @@ global/statusline-command.sh        statusline, linked by install-global.sh
 global/permissions.json             guardrail deny/ask rules, merged into ~/.claude/settings.json by install-global.sh
 global/build-cloud-setup.sh         prints the claude.ai/code environment setup script; output holds personal files, never commit it
 global/githooks/commit-msg          commit message hook; repos point at it via core.hooksPath, never copied
-global/githooks/post-checkout       on `git worktree add`, symlinks the ignored Claude harness from the main checkout
+global/githooks/post-checkout       on `git worktree add`, symlinks the ignored Claude harness and .env* files from the main checkout
 global/claude-hooks/<name>.sh       optional Claude Code hooks; settings point at them, never copied, nothing installs them```
 
 Each skill is symlinked into a target project as `.claude/skills/<skill>` by the init scripts. There are no per-project agents.

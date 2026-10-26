@@ -125,7 +125,7 @@ Resolve via the **manifest as a cache, verified against the live board** (the ch
      has an upstream, then continue.
    - `feat/<STORY_ID>` is checked out in another worktree → **STOP**: "Open a session in `<path>` and
      run `/spec-apply <STORY_ID>` there."
-   - Otherwise create it (the post-checkout hook links the local Claude harness into it):
+   - Otherwise create it (the post-checkout hook links the local Claude harness and the ignored `.env*` files into it):
      ```bash
      git worktree add -b feat/<STORY_ID> "$main-<STORY_ID>" origin/<BASE>   # new branch
      git worktree add "$main-<STORY_ID>" feat/<STORY_ID>                     # branch already exists

@@ -349,7 +349,10 @@ ticket-first (`OG-4703: ...`). It is POSIX `sh` plus `grep -E`.
 `global/githooks/post-checkout` runs too. It acts only on `git worktree add`
 (git passes an all-zero previous ref then). It symlinks the main checkout's
 ignored `CLAUDE.md`, `.claude`, `*/CLAUDE.md` and `docs/brain` into the new
-worktree, so every worktree shares one copy of the harness.
+worktree, so every worktree shares one copy of the harness. It links the ignored
+env files too (`.env`, `.env.local`, `apps/api/.env`, any `.env.*`), so the app
+starts in the worktree for e2e tests and the browser check. A tracked
+`.env.example` is already there and is left alone.
 
 - A `.claude/` ignore rule with a trailing slash does not match the symlink, so
   git sees it as untracked. Write the rule as `.claude`, without the slash.
@@ -487,7 +490,7 @@ and the `ponytail` plugin. See [Tooling](#tooling).
 | `init-dotnet-project.sh` | Same, for .NET Clean Architecture (defaults to `dotnet`) |
 | `global/agents/` | The 7-agent team |
 | `global/githooks/commit-msg` | Commit message hook, referenced via `core.hooksPath` |
-| `global/githooks/post-checkout` | Links the local Claude harness into new worktrees, same `core.hooksPath` |
+| `global/githooks/post-checkout` | Links the local Claude harness and ignored `.env*` files into new worktrees, same `core.hooksPath` |
 | `global/claude-hooks/` | Optional Claude Code hooks, opt-in, referenced from settings |
 | `global/behavior.md` | How the agent writes and acts, linked as `~/.claude/behavior.md` by `install-global.sh` |
 | `PERSISTENT-MEMORY.md` | claude-mem + engram memory guide |
