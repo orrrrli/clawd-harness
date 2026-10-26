@@ -27,6 +27,7 @@ Phase 4  Verify    → spec-verify on the whole Story (code-reviewer) [+ securit
 Phase 4.5 Commit   (the implementation commit; tests were committed in 2.5)
 Phase 5  Archive   (comment on the Story, close every Task in the checklist)
 Phase 6  Finish   → push the Story branch and open one PR for the Story
+                    (light mode: draft + deferred-checks; a later full run finishes it)
 ```
 
 ## Prerequisites
@@ -64,6 +65,20 @@ Derivation rules:
 **Goal:** Turn whatever the user gave you (raw `#N`, a Story ID like `FS-AUTH-1`, a Task ID like
 `FS-AUTH-1-T1`, or "list my stories") into a concrete **Story issue number**, its **Epic number**,
 and the **checklist of its open Task sub-issues**. Then set up the Story worktree.
+
+**Runtime mode first:** `cat ~/.claude/runtime-mode 2>/dev/null`. `full` → the slice checks (e2e,
+browser check) run against this worktree's own stack. Anything else, a missing file included, is
+`light` → they are deferred, the Story still ships code and every test that needs no running stack,
+and its PR opens as a draft. State the mode in the Phase 0 exit gate.
+
+**Catch-up (full mode only):** if the Story already has an open draft PR labeled `deferred-checks`
+(`gh pr list --repo <owner/repo> --head feat/<STORY_ID> --label deferred-checks --json number`),
+do not run the cycle again. After steps 1-8 below resolve the Story and its worktree, run only:
+1. `spec-verify <STORY_ID>` on the committed branch (clean tree → `<BASE>...HEAD`).
+2. PASS → remove the PR's `## Deferred checks` section, `gh pr edit <pr#> --remove-label
+   deferred-checks`, `gh pr ready <pr#>`, then close the Story's Tasks as in Phase 5.
+3. FAIL → the Phase 4 failure policy: one fix, committed as `fix(<STORY_ID>): <summary>`, pushed,
+   verified again. Still failing → STOP; the PR stays draft.
 
 Resolve via the **manifest as a cache, verified against the live board** (the chosen strategy):
 
@@ -160,7 +175,7 @@ the checklist is that one task (still in the Story worktree), and the cycle cove
 that task serves.
 
 **Exit gate:** State the resolved `Story #<n> (<STORY_ID>)`, `Epic #<n> (<EPIC_ID>)`, the
-estimate, the base branch `<BASE>`, the working branch `feat/<STORY_ID>` and its worktree path,
+estimate, the runtime mode, the base branch `<BASE>`, the working branch `feat/<STORY_ID>` and its worktree path,
 and the **checklist** (`Task #<n> (<TASK_ID>) [area]` each). If the input matched zero or many
 stories, list the candidates and ask which one. Then continue to Phase 1.
 
@@ -258,7 +273,8 @@ agent that does not implement.
      stays in the suite, so the slice keeps a test after merge.
    - If the interface does not exist yet, add only a signature stub from Phase 2 that
      throws not-implemented. No logic.
-   - Run the tests and report each one RED with its failure reason.
+   - Run the tests and report each one RED with its failure reason. In `light` mode the e2e
+     test is written but not run: report it as "written, not run (light mode)".
 2. Check the reasons: a test red for the wrong reason (typo, broken fixture) goes back
    to `test-writer` once.
 3. Commit the red tests, then continue to Phase 3:
@@ -313,7 +329,8 @@ After each file change, state: file path + what changed + why.
 did not write the code.
 
 1. **Self-check first** (cheap, before spending a review):
-   - [ ] Existing tests still pass in every layer (`npm run test` / `dotnet test` / equivalent)
+   - [ ] Existing tests still pass in every layer (`npm run test` / `dotnet test` / equivalent).
+     In `light` mode, only the ones that need no running stack (skip e2e).
    - [ ] Phase 2.5 tests are green and untouched (`git diff -- <test files>` is empty)
    - [ ] No files outside Phase 2 + 2.5 scope were modified
 2. **Independent review**, uncommitted, in ONE message so they run concurrently:
@@ -328,6 +345,9 @@ did not write the code.
      paths to `CLAUDE.md` and `engineering/standards.md`.
 3. **Act on the reports:** reviewers never edit. Fix blocking findings yourself; list minor ones in
    the Phase 5 comment instead of fixing them.
+
+`PASS (DEFERRED)` from spec-verify (light mode) counts as a pass for Phase 4.5: keep its list of
+`~ DEFERRED` criteria for Phase 6.
 
 **Failure policy:** If `spec-verify` returns FAIL or the security-auditor reports a critical/high
 issue, make **one** attempt to fix it in Phase 3 and verify again. If it still fails, **STOP the
@@ -371,7 +391,8 @@ Rules:
    ```
 
 2. Close every Task in the checklist that the plan covered. A Task left out in Phase 2 stays open
-   and is named in the Phase 6 report:
+   and is named in the Phase 6 report. After a `PASS (DEFERRED)`, close none: the full-mode
+   catch-up closes them once the slice passes, so the board never shows an unverified Story as done:
    ```bash
    gh issue close <task#> --repo <owner/repo> --comment "Done in <sha> (<STORY_ID>)."
    ```
@@ -395,13 +416,20 @@ Rules:
      --body-file <scratchpad>/pr.md
    ```
    Write `pr.md` per `~/.claude/workflows.md` "Pull Requests". `## What` names Story #<story#>
-   (<STORY_ID>) and ends with one `Closes #<task#>` line per closed task. A task left open goes
-   under `## Not changed`.
+   (<STORY_ID>) and ends with one `Closes #<task#>` line per task the plan covered. A task left
+   out goes under `## Not changed`.
    Do NOT add a Claude/AI co-author or generated-by trailer to the PR.
 
-3. Report done: the PR URL, the tasks closed, and anything left open or for a follow-up. Close
-   with: "After merge, remove the worktree: delete its harness symlinks first, then
-   `git worktree remove <path>`."
+   After a `PASS (DEFERRED)`: add `--draft --label deferred-checks` (create the label once with
+   `gh label create deferred-checks --repo <owner/repo> --force`), and add a `## Deferred checks`
+   section listing each `~ DEFERRED` criterion and the check it waits for. A draft cannot be
+   merged; only the full-mode catch-up marks it ready.
+
+3. Report done: the PR URL, the tasks closed, and anything left open or for a follow-up. A draft
+   PR ends with: "Slice checks deferred (light mode). Run `/spec-apply <STORY_ID>` with
+   `full` in `~/.claude/runtime-mode` to finish." Close with: "After merge, stop the Story's
+   containers and drop its volume (`docker compose -p <COMPOSE_PROJECT_NAME from .env.worktree>
+   down -v`), delete the worktree's harness symlinks, then `git worktree remove <path>`."
 
 ---
 
@@ -423,5 +451,7 @@ Rules:
   stays; no Task is closed.
 - If the Story `depends_on` another issue (manifest / Story body), check that dependency is closed
   before starting Phase 3.
+- **A draft PR with `deferred-checks` leaves draft only after a full-mode run passes.** Never mark it
+  ready by hand from light mode.
 - **No AI co-authorship** on commits or the PR (no `Co-Authored-By: Claude`, no generated-by trailer).
 - **Ponytail principles must be applied during Phase 3 (Apply)** — favor simplicity, reuse, and minimalism.
