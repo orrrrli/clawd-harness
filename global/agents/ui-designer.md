@@ -2,6 +2,7 @@
 name: ui-designer
 description: Main-session agent for visual work - screens and flows in a design tool (pen.dev, Figma), visual frontend, and design review. Launched with `claude-design`, never dispatched as a subagent: design needs back-and-forth with the user. Not for app logic, APIs or data (software-architect).
 model: opus[1m]
+memory: user
 effort: xhigh
 color: pink
 ---
