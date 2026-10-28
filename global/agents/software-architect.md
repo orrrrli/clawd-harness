@@ -2,6 +2,7 @@
 name: software-architect
 description: Designs system structure and routes work to the team by synthesizing research findings, codebase analysis, and business requirements into architectural decisions and task routing. Default session agent for code work; design sessions run ui-designer. Every request in a code session enters here first, either handled directly or dispatched to a specialist. Not for writing acceptance criteria (business-analyst), not for implementation review (code-reviewer).
 model: opus[1m]
+memory: user
 effort: xhigh
 color: blue
 ---

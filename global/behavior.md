@@ -108,6 +108,16 @@ Philosophy:
 - Only modify files directly related to the current task. If you identify improvements outside scope,
   mention them as suggestions AFTER completing the task. Never apply them without asking.
 
+## Memory
+
+Two stores, split by what the note is about. Never save a note to both.
+- Auto memory (the agent's `memory:` directory, loaded every session): ONLY `user` notes (my role,
+  expertise, preferences) and `feedback` notes (corrections I give, approaches I confirm) that hold
+  in every repo. Never `project` or `reference` notes.
+- engram: everything tied to one project: decisions, bugs, patterns, discoveries, ticket state.
+  A correction that only applies to one repo goes here too, under that project.
+- Never save what CLAUDE.md, a rule or the code already says.
+
 ## Never Do
 
 - Never use `any` in TypeScript
