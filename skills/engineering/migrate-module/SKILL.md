@@ -1,7 +1,7 @@
 ---
 name: migrate-module
 stacks: [all]
-description: "Port a legacy codebase to the new stack one module at a time, using the legacy code as the spec. First maps the legacy into ordered modules in .claude/migration.md (once per project). Then per module: inventory every legacy behavior with file:line, prove the inventory covers every function and handler, mark each same / fixed / dropped, split it into capabilities with short acceptance criteria, and get one approval. Then build each capability test-first, one commit per capability, with no further stops. No GitHub issues, no PRs: the inventory is the spec and the state. Use when the user says '/migrate-module <module> [capability]', '/migrate-module map', 'migrate the <x> module', 'map the legacy modules', 'next capability of <module>', or 'module status'."
+description: "Port a legacy codebase to the new stack one module at a time, using the legacy code as the spec. First maps the legacy into ordered modules in .claude/migration.md (once per project). Then per module: inventory every legacy behavior with file:line, prove the inventory covers every function and handler, mark each same / fixed / dropped, split it into capabilities with short acceptance criteria, and get one approval. Then build each capability test-first, one commit per capability, pushed to the module's pull request as it closes, so CI validates it while the next capability is built. No GitHub issues: the inventory is the spec and the state. Use when the user says '/migrate-module <module> [capability]', '/migrate-module map', 'migrate the <x> module', 'map the legacy modules', 'next capability of <module>', or 'module status'."
 trigger: /migrate-module
 ---
 
@@ -9,13 +9,15 @@ trigger: /migrate-module
 
 The legacy app is the spec. A module is inventoried as a whole so no legacy behavior is lost; it
 is delivered one capability (one thing a user can do) at a time. One approval per module, then
-build without stopping.
+build without stopping: push each capability as it closes and let CI run it while the next one is
+being built.
 
 ## Project config
 
 Everything project-specific lives in `.claude/migration.md`: repo, legacy files, new code paths,
-branch, decisions doc, conventions, tenant, golden paths, and the ordered module table. This skill
-calls its values "config". Module docs always live at `docs/migration/<module>/inventory.md`.
+branch and the branch it merges into, decisions doc, conventions, tenant, golden paths, the local
+gate, and the ordered module table. This skill calls its values "config". Module docs always live
+at `docs/migration/<module>/inventory.md`.
 
 If the user names a module out of order, say which earlier modules are not done and ask.
 
@@ -91,24 +93,40 @@ approval set `Status: approved` and commit (`docs(<module>): Add migration inven
 2. Write the tests first, one or more per AC, plus the negative and boundary cases they imply.
    Expected values come from the AC, never from the new code. If the config names a tenant,
    every capability that reads or writes tenant data includes an isolation test: tenant A never
-   sees or changes tenant B's rows.
-3. Implement the minimum that makes them pass (ponytail). Follow the config's conventions.
-4. Run the full test suite. Green, then commit: `git add` only this capability's files,
-   `feat(<MODULE>-<C>): <Imperative summary>`. Subject only, no body, no AI trailer. Include the
-   inventory edit setting the capability and its rows to `done` in the same commit.
+   sees or changes tenant B's rows. Run only these new tests with the config's `Local gate` and
+   confirm each one fails for the missing behavior. A test that already passes proves nothing:
+   fix it before implementing.
+3. Implement the minimum that makes them pass (ponytail), running only the new tests. Follow the
+   config's conventions.
+4. Check the work locally without running the full suite: only the config's `Local gate` (compile,
+   typecheck, format, the new tests). The full suite is CI's job unless the config says otherwise.
+   Commit:
+   `git add` only this capability's files, `feat(<MODULE>-<C>): <Imperative summary>`. Subject only,
+   no body, no AI trailer. Include the inventory edit setting the capability and its rows to `done`
+   in the same commit.
+5. Push the commit to the config's module branch. The module has one pull request into the branch
+   that `Branch` names as its merge target: open it on the first push if it is missing, and push
+   every later capability to the same PR so the review and the CI history stay in one place.
+6. Start the next capability immediately, without waiting for CI. When a run for a finished
+   capability comes back red, stop the capability in progress and fix that failure first; never
+   stack a capability on a red run.
 
 Stop only when:
 - a criterion is ambiguous, or the legacy contradicts a decision in the config's decisions doc;
 - the work needs a new entity, table, dependency, or architecture choice not in the inventory;
-- a behavior turns up that is not in the inventory (add the row, show it, then build it).
+- a behavior turns up that is not in the inventory (add the row, show it, then build it);
+- CI fails on a capability already pushed (fix it before starting anything else).
 
-Then go on to the next capability. Report one line per finished capability.
+Report one line per finished capability with its CI state (running, green, red), and name the
+capability being built next.
 
 ## Module close
 
 When every row is `done` or `dropped`: report counts, list the `dropped` rows for a final OK,
-set `Status: closed (<date>)` and commit (`docs(<module>): Close the migration module`), name the
-next module. Rows still `Real data: pending` are listed as open, not blocking.
+set `Status: closed (<date>)` and commit (`docs(<module>): Close the migration module`), then push
+it, rewrite the PR body with the final counts, and name the next module. The last capability's CI
+run must be green before the module closes; the user merges. Rows still `Real data: pending` are
+listed as open, not blocking.
 
 After the last module in the config's table, run one full `security-auditor` pass over the new
 code paths before anything ships: tenant isolation, auth, sessions, permissions, untrusted input.
@@ -120,5 +138,9 @@ code paths before anything ships: tenant isolation, auth, sessions, permissions,
 - No real data in git: examples are synthetic; real records stay in gitignored local paths.
 - Never edit, skip or weaken a test to get green.
 - The inventory is the state: a new session resumes from it, never from memory.
-- Commits go on the config's module branch. No PRs. Push only when the user asks.
+- Commits go on the config's module branch and reach it through one PR into its merge target. Push
+  each capability as it closes; the next one starts while CI runs. A red run stops the work.
+- The full test suite runs in CI. Locally run only the config's `Local gate` (compile, typecheck,
+  the capability's new tests); never report a capability as verified on the strength of a local
+  run, and never run the full suite when the config says CI owns it.
 - Reports and questions in the user's language; docs and code in English.

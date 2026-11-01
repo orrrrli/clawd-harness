@@ -41,6 +41,7 @@ Fill from the repo; ask only what the code cannot answer, one question at a time
 | Legacy (read-only) | Files or directories |
 | New code | Backend and frontend paths |
 | Branch | Pattern per module, e.g. `migracion/<module>`, and where it merges |
+| Local gate | Compile, typecheck and format commands, the command that runs a single test file, and whether CI owns the full suite |
 | Decisions doc | The doc holding the data model decisions Step 1 cites, or `none` (then every new entity is a Step 2 stop) |
 | Conventions | Architecture, standards and testing docs |
 | Tenant | The tenant entity for isolation tests, or `none` |
