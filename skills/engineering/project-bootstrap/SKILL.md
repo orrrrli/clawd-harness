@@ -118,14 +118,14 @@ Apply the same discipline as `spec-apply`'s Apply phase:
 Anti-overengineering defaults for this stack — deviate only if
 `architecture/overview.md` or `engineering/standards.md` explicitly says
 otherwise:
-- No generic `IRepository<T>` — query via `DbContext` directly in handlers,
-  or a repository scoped to this one entity if the query is non-trivial.
+- No generic `IRepository<T>` — a repository scoped to this one entity. Handlers
+  never touch `DbContext`.
 - No service layer duplicating what the Command/Query handler already does.
 - No CQRS bus, no event sourcing, no outbox — MediatR in-process only.
-- **Minimal APIs**, not Controllers.
+- **Carter modules** on Minimal APIs, not Controllers.
 - **FluentValidation only if the business rule is non-trivial** (more than a
   null/empty check) — otherwise validate inline in the handler.
-- **`Result<T>`** for expected failure paths (validation, not-found) instead
+- **`ErrorOr<T>`** for expected failure paths (validation, not-found) instead
   of throwing exceptions for control flow.
 - Mobile: TanStack Query for the fetch/mutation, no Zustand unless the slice
   genuinely needs cross-screen state (it usually doesn't for one slice).
@@ -134,7 +134,7 @@ Slice contents (adjust command vs query to match the chosen use case):
 - `Domain`: the entity + any invariant the business rule requires
 - `Application`: one Command or Query + Handler, validation per the rule above
 - `Infrastructure`: EF Core configuration/migration for the entity
-- `Api`: one Minimal API endpoint wired to the handler
+- `Api`: one Carter module endpoint wired to the handler
 - `Application.Tests`: handler test covering the business rule
 - `Api.Tests`: one integration test hitting the endpoint
 - Mobile: one screen (Expo Router route) that calls the endpoint via a

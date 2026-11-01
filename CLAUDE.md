@@ -6,7 +6,7 @@ them into a project. There is no application here — it is markdown and bash.
 ## Layout
 
 ```
-skills/<category>/<name>/SKILL.md   20 skills across 3 categories
+skills/<category>/<name>/SKILL.md   21 skills across 3 categories
 global/agents/<name>.md             7-agent team, user-level (all projects)
 harness.sh                          the only installer: project setup (--stack aware), --global, --update
 global/behavior.md                  how the agent writes and acts (no personal data), linked as ~/.claude/behavior.md by harness.sh --global
@@ -85,4 +85,4 @@ This repo has no `.claude/` context tree — `/fill-context` has never run here,
 and for a repo this small the file you are reading is the whole context.
 
 Project-level docs: `README.md` (installation and inventory),
-`PERSISTENT-MEMORY.md` (claude-mem + engram).
+`PERSISTENT-MEMORY.md` (auto memory + engram).

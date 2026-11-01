@@ -39,7 +39,9 @@ done
 # Skills available in every session, not only in set-up projects.
 GLOBAL_SKILLS=(
     engineering/context-sync
+    engineering/dotnet-clean-architecture
     engineering/fill-context
+    engineering/pr-body
     engineering/prd-to-github-backlog
     engineering/prompt-rewrite
     engineering/spec-apply
@@ -171,7 +173,7 @@ MCP servers (run by hand, once per machine):
   # GitHub: fine-grained PAT, read-only Contents/Issues/PRs. Do not use `read -s`, the paste breaks.
   read "GH?Paste PAT: " && [[ $GH == github_pat_* ]] && claude mcp add --scope user --transport http github https://api.githubcopilot.com/mcp --header "Authorization: Bearer ${GH//[[:space:]]/}"; unset GH; clear
 
-  # engram: subagent memory. Setup registers the MCP as `engram mcp --tools=agent`.
+  # engram: project memory. Setup registers the MCP as `engram mcp --tools=agent`.
   brew install gentleman-programming/tap/engram
   claude plugin marketplace add Gentleman-Programming/engram
   claude plugin install engram@engram

@@ -377,7 +377,6 @@ Rules:
 - **Subject line only — no body, no trailers.** The scope is the Story ID (or the Task ID on a
   single-task input). Tasks are closed in Phase 5 with `gh issue close`, and the Story PR body
   lists `Closes #<task#>`, so the commit needs no `Closes` line.
-- **Do NOT add any Claude/AI co-author trailer** (no `Co-Authored-By: Claude`). Author is the user only.
 - Commit **only** the files this Story changed (they should match Phase 2 scope; the tests are
   already committed and must not appear in this commit).
 
@@ -417,10 +416,9 @@ Rules:
      --title "<STORY_ID>: <story title>" \
      --body-file <scratchpad>/pr.md
    ```
-   Write `pr.md` per `~/.claude/workflows.md` "Pull Requests". `## What` names Story #<story#>
+   Write `pr.md` with the `pr-body` skill. `## What` names Story #<story#>
    (<STORY_ID>) and ends with one `Closes #<task#>` line per task the plan covered. A task left
    out goes under `## Not changed`.
-   Do NOT add a Claude/AI co-author or generated-by trailer to the PR.
 
    After a `PASS (DEFERRED)`: add `--draft --label deferred-checks` (create the label once with
    `gh label create deferred-checks --repo <owner/repo> --force`), and add a `## Deferred checks`
@@ -456,5 +454,4 @@ Rules:
   before starting Phase 3.
 - **A draft PR with `deferred-checks` leaves draft only after a full-mode run passes.** Never mark it
   ready by hand from light mode.
-- **No AI co-authorship** on commits or the PR (no `Co-Authored-By: Claude`, no generated-by trailer).
 - **Ponytail principles must be applied during Phase 3 (Apply)** — favor simplicity, reuse, and minimalism.

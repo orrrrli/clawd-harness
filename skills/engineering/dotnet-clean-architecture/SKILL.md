@@ -1,134 +1,119 @@
 ---
 name: dotnet-clean-architecture
-description: Scan a .NET Clean Architecture solution for the five violations that break the dependency rule — Domain referencing EF Core, handlers touching DbContext directly, Application referencing Infrastructure, controllers bypassing MediatR, and exceptions used for expected business errors. Use when adding a feature, after a large refactor, or whenever project references have drifted.
 stacks: [dotnet]
+description: "Author or audit a vertical slice in an ASP.NET Core Clean Architecture + CQRS codebase (Domain / Contracts / Application / Infrastructure / API, MediatR, EF Core + Npgsql, ErrorOr). Use when adding a feature, a command, a query or an endpoint to a .NET API; when reviewing whether a slice respects the layer contract; or when the user says 'clean architecture', 'CQRS', 'new endpoint', 'review the backend', 'add a command', 'is this in the right layer'."
+trigger: /dotnet-clean-architecture
 ---
 
-# Audit .NET Clean Architecture Boundaries
+# .NET Clean Architecture
 
-Scan for violations of the dependency rule. Dependencies point INWARD only:
+Two modes. Pick one before touching anything.
+
+- **Author** — a new feature or endpoint. Follow the layout below; do not invent a new folder or a new pipeline behavior.
+- **Audit** — an existing slice or a diff. Walk the checklist and report violations with `file:line`. Do not fix while auditing.
+
+## Layer contract
 
 ```
-API / Web          ← composition root — MediatR only, no DbContext, no repositories
-    ↓
-Application        ← handlers, DTOs, validators — DEFINES interfaces, implements none
-    ↓
-Domain             ← entities, value objects, domain errors — ZERO project/package refs
-    ↑
-Infrastructure     ← EF Core, external clients — IMPLEMENTS Application's interfaces
+API  ──►  Infrastructure  ──►  Application  ──►  Domain
+ │                                 │
+ └──────────►  Contracts  ◄────────┘
 ```
 
-`Infrastructure` points UP at `Application`, never the reverse. `Domain` points at nothing.
-`API` references `Infrastructure` for DI registration ONLY — never to call it.
+Direct project references only. `Application → Domain, Contracts`; `Infrastructure → Application`; `API → Application, Infrastructure`; tests → the project they test. `Domain` and `Contracts` reference no project. `Infrastructure → Domain` and `API → Domain|Contracts` arrive transitively — never write them.
 
----
+| Layer | Owns | Must not |
+|---|---|---|
+| `Domain` | Entities, invariants (`static ErrorOr<T> Create`), `<Entity>Errors`, enums | Reference EF Core, ASP.NET, or any other layer. Depends on ErrorOr only |
+| `Contracts` | `XxxRequest` in, `XxxResponse` out | Contain logic, or reference Domain types |
+| `Application` | Commands, queries, handlers, validators, `XxxResult` records, behaviors, repository interfaces | Reference EF Core or HTTP |
+| `Infrastructure` | `DbContext`, configurations, migrations, repositories, identity, interceptors, external services | Contain business rules |
+| `API` | Carter modules, result mapping, auth policies, middleware, `Program.cs` | Contain business rules or touch `DbContext` |
 
-## The Five Patterns to Find
+## Layout
 
-### Pattern 1 — Domain references anything
-
-`Domain.csproj` has a `PackageReference` or `ProjectReference`. Most common offender: `Microsoft.EntityFrameworkCore`, added so an entity can carry a `[Key]` attribute or a navigation property configured inline.
-
-**Why it breaks things:** The moment Domain knows about EF Core, your business rules are welded to a persistence library. You can't unit-test an entity without dragging in a DbContext, and swapping the ORM becomes a rewrite instead of a config change.
-
-**Fix:** Remove the reference. Move the mapping into `Infrastructure/Persistence/Configurations/<Entity>Configuration.cs` using `IEntityTypeConfiguration<T>`. Fluent API expresses everything attributes do, and it lives in the layer that owns persistence.
-
----
-
-### Pattern 2 — Handler depends on the concrete DbContext
-
-A handler in `Application/**` has `using` of `Infrastructure.*`, or injects `ApplicationDbContext` instead of an abstraction.
-
-**Why it breaks things:** Application is supposed to declare what it needs and let Infrastructure satisfy it. A handler bound to the concrete context can't be tested without a real database, and the dependency arrow now points outward — the exact thing Clean Architecture exists to prevent.
-
-**Fix:**
-1. Declare `IApplicationDbContext` in `Application/Common/Interfaces/` exposing only the `DbSet<T>` properties handlers actually use, plus `SaveChangesAsync`.
-2. Have `ApplicationDbContext : DbContext, IApplicationDbContext` in Infrastructure.
-3. Register it: `services.AddScoped<IApplicationDbContext>(p => p.GetRequiredService<ApplicationDbContext>());`
-4. Inject the interface in the handler.
-
-Note: `IApplicationDbContext` is a legitimate abstraction, not a leaky one — it names the data the layer needs without naming the provider behind it. A full repository per aggregate is also fine; pick one and stay consistent.
-
----
-
-### Pattern 3 — Application references Infrastructure
-
-`Application.csproj` has `<ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />`.
-
-**Why it breaks things:** This inverts the whole architecture. Everything inside Application can now reach EF Core, HTTP clients, and third-party SDKs, and the compiler stops protecting the boundary. Pattern 2 becomes invisible because nothing flags it any more.
-
-**Fix:** Delete the reference and fix whatever breaks — each break is a real violation the reference was hiding. Interfaces move to `Application/Common/Interfaces/`, implementations stay in Infrastructure, and `API` wires them together in DI.
-
----
-
-### Pattern 4 — Controller bypasses MediatR
-
-A controller in `API/**` injects a repository, `IApplicationDbContext`, or a service directly, instead of sending a Command or Query.
-
-**Why it breaks things:** The controller becomes a second place where business flows live. Pipeline behaviours — validation, logging, transactions — attach to MediatR, so anything bypassing it silently skips all of them. Your `ValidationBehavior` doesn't run and invalid input reaches the database.
-
-**Fix:** Move the logic into a Command or Query handler in Application. The controller keeps exactly three jobs: bind the request, `await _sender.Send(command)`, map the result to an HTTP status.
-
----
-
-### Pattern 5 — Exceptions for expected business errors
-
-A handler throws (`NotFoundException`, `InsufficientBalanceException`) for an outcome that is a normal, predictable branch of the business flow.
-
-**Why it breaks things:** Exceptions are for the unexpected. Using them for "the email is already taken" makes an ordinary path cost a stack-trace capture, hides the outcome from the method signature, and pushes control flow into middleware where it can't be tested. The caller can't tell from `Task<User>` that three business failures are possible.
-
-**Fix:** Return `ErrorOr<T>`. Declare the failures as `static Error` on the domain type, return them, and let the endpoint map errors to status codes via `Problem(errors)`.
-
-```csharp
-// before
-if (user is null) throw new NotFoundException(nameof(User), id);
-
-// after
-if (user is null) return UserErrors.NotFound;
+```
+src/Application/UseCases/<Feature>/{Commands,Queries,Handlers,Validators,Common}
+src/Contracts/<Feature>/Request/…   Response/…
+src/Domain/<Aggregate>/<Entity>.cs, <Entity>Errors.cs
+src/Infrastructure/Persistence/{Configurations,Repositories,Migrations}
+src/API/Modules/<Resource>Module.cs
 ```
 
-Genuinely exceptional cases — the database is unreachable, a required config key is missing — still throw. The test is whether the outcome is part of the business flow, not whether it is a failure.
+One type per file. `XxxCommand`/`XxxQuery` are `sealed record`; handlers and validators are `internal sealed class`. `net10.0`, `Nullable` and `ImplicitUsings` on, versions in `Directory.Packages.props`, one `DependencyInjection.cs` per layer.
 
----
+## Endpoints (API)
 
-## Process
+- Carter module per resource, grouped under `/api/v{version}`, `RequireAuthorization()` by default; anonymous endpoints opt out explicitly.
+- REST nouns, plural. Never RPC (`/get-all-students`).
+- Every endpoint takes `CancellationToken` and passes it to `sender.Send`.
+- Register a **method group**, never a lambda: `private static async Task<IResult> <Name>(ISender sender, …bound args…, CancellationToken ct)`. `ISender` first.
+- Declare the wire contract: `.Produces<ApiSuccessResponse<XxxResponse>>(status)` per status the route can return, plus `.WithName("…")`. A file download declares its type too.
+- Request → command with Mapster (`request.Adapt<XxxCommand>()`) **unless** a nullable request field feeds a non-nullable command field — there the manual `new XxxCommand(a, b, c)` with its `?? ""` is the behaviour, because Mapster would write null into a non-nullable string.
+- One result mapper: success → `{ data }`, errors → ProblemDetails, validation → every error, not the first. Routes returning no body or a file keep an explicit `Match`.
+- `201` through the project's `Created(uri, data)` helper.
+- No `try/catch` in an endpoint. One `IExceptionHandler` behind `UseExceptionHandler()`; it never returns exception text to the client.
 
-### 1. Scan
+## CQRS (Application)
+
+- Markers `ICommand<T>`, `ITransactionalCommand<T>`, `IQuery<T>`, all returning `ErrorOr<T>`. **The marker decides whether the pipeline saves**: a handler whose marker is not the one `PersistenceBehavior` matches answers 204 and persists nothing. When adding a behavior or a marker, check the pairing.
+- Pipeline order: `ValidationBehavior` → `LoggingBehavior` → `PersistenceBehavior` (one `SaveChangesAsync` per successful command) → `TransactionBehavior` (only the transactional marker).
+- Register validators with `includeInternalTypes: true`.
+- Handler output is an Application `XxxResult`. The wire contract is the `Contracts` `XxxResponse`.
+- The response side is implicit: the mapper finds the twin by name among `Contracts`. A trailing `Result` is optional, so `StudentResult` and `Student` both want `StudentResponse`. Nothing binds that name to the route's `.Produces<…>`, so renaming an Application record without its twin serializes the internal record while the spec keeps promising the contract, with no build error. Treat the `.Produces` type as part of the rename.
+- A list is never adapted: for a `GET` returning a list declare `IReadOnlyList<XxxResponse>` and accept that it only types the spec.
+
+## Domain and errors
+
+- `static ErrorOr<T> Create(...)` enforces invariants. `private set` everywhere; state changes go through methods that return `ErrorOr<Success>`.
+- `static class <Entity>Errors` with `public static readonly Error` fields. Domain invariants in Domain; lookup, auth and cross-entity errors in `Application/Common/Errors`.
+- **Never throw for an expected business failure.** Return the error.
+- `Error.Validation` is for a field the form shows. When the sentence itself is the payload the user must read, a validation error collapses into the generic title — use a custom 400 with its own code.
+
+## Persistence (Infrastructure)
+
+- EF Core + Npgsql, snake_case, one `IEntityTypeConfiguration<T>` per entity.
+- Tenant isolation: every owned entity implements the scoping interface and gets a global query filter. Handlers never filter by tenant by hand. `IgnoreQueryFilters()` only in a handler that checks the privileged role.
+- Tracking by default; reads `AsNoTracking()`. **A read that a write will edit must not be `AsNoTracking`** — add a tracked read beside the fast one.
+- Optimistic concurrency on every editable entity: map a `Version` property as the row version (on Npgsql that is the `xmin` system column, no data column), return 409 on mismatch, never last-write-wins.
+- A unique violation or a serialisation failure may arrive as a bare provider exception, **not** wrapped in `DbUpdateException`. Walk the exception chain and discriminate on the SQL state before letting it become a 500.
+- Audit columns set by a `SaveChanges` interceptor, never by hand.
+- Ownership lookups return Forbidden from a single query, so a caller cannot probe which ids exist.
+- Migrations applied by the deployment (bundle) before the container swap.
+- A custom `StringComparer` inside an `OrderBy` does not translate: project first, order in memory.
+
+## Auth
+
+- Identity with an `HttpOnly`, `SameSite=Lax`, `Secure` cookie; SPA and API on one origin.
+- Antiforgery on every state-changing endpoint.
+- Named policies, never inline role strings in a module. Every client-side role check gets its server-side policy.
+- Current user and tenant come from the current-user abstraction, never from the request body.
+
+## Config, logging, input
+
+- Options: `SectionName` const, `ValidateDataAnnotations().ValidateOnStart()`.
+- Serilog through a pipeline behavior; no manual logging in endpoints.
+- Minimal API binding lets `null` into a non-nullable collection: guard `is not { Count: > 0 }` before `.Any()`/`.Select()`, or a malformed body is a 500.
+- `Enum.TryParse` accepts out-of-range numerics (`"7"` into a four-value enum) and persists garbage. Pair every parse with `Enum.IsDefined`.
+
+## Known defects — never copy
+
+Guide projects are referenced for structure only, with these defects removed: a static shared exception field; `try/catch` in an endpoint leaking `ex.Message`; `UseExceptionHandler()` missing; only the first validation error returned; no `CancellationToken`; global `NoTracking`; `SameSite=None` without antiforgery; EF configuration inline in `OnModelCreating`; auth state read from local storage; status detected by matching messages; a base URL repeated per call; inline query keys.
+
+## Audit scan
 
 ```bash
-# Pattern 1: Domain must have zero references
-rg "PackageReference|ProjectReference" --glob "**/Domain*.csproj"
-
-# Pattern 3: Application must not reference Infrastructure
-rg "Infrastructure" --glob "**/Application*.csproj"
-
-# Pattern 2: handlers reaching into Infrastructure or the concrete context
-rg "using .*Infrastructure|ApplicationDbContext" --glob "src/Application/**/*.cs"
-
-# Pattern 4: controllers injecting anything other than ISender/IMediator
-rg "private readonly I\w+" --glob "src/**/Controllers/*.cs"
-
-# Pattern 5: throws inside handlers
+rg "PackageReference|ProjectReference" --glob "**/Domain*.csproj"    # only ErrorOr is allowed
+rg "Infrastructure|EntityFrameworkCore" --glob "**/Application*.csproj"
+rg "using .*Infrastructure|DbContext" --glob "src/Application/**/*.cs"
+rg "DbContext|I\w+Repository" --glob "src/API/**/*.cs"
 rg "throw new \w+Exception" --glob "src/Application/**/*.cs" --context 3
 ```
 
-Pattern 4 needs a second look by hand: a controller injecting `ISender`, `IMapper`, or `ILogger` is fine. Anything domain- or data-shaped is the violation.
+Report by finding with `file:line`, then ask which ones to fix. Fix in this order: project
+references, Domain references, handlers, modules, exceptions. Run `dotnet build` and `dotnet test`
+after each. One commit per kind of violation, prefix `fix(arch):`.
 
-### 2. Report
+## Gate
 
-Group by pattern. For each violation give:
-- **File + line**
-- **What it does** (one sentence)
-- **Which fix applies**
-
-Do NOT fix automatically. Show the list and ask: "Which violations do you want me to fix?"
-
-### 3. Fix
-
-Work one pattern at a time, in this order — **3 → 1 → 2 → 4 → 5**. Pattern 3 first because the project reference masks every other violation; once it's gone the compiler finds the rest for you.
-
-After each pattern: `dotnet build` then `dotnet test`. Confirm green before moving to the next.
-
-### 4. Commit
-
-One commit per pattern. Prefix: `fix(arch):`.
+`dotnet test` on the solution, `dotnet build` with zero warnings. Report the failing test name and the layer it belongs to, not the whole stack trace.
