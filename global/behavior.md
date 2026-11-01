@@ -78,7 +78,8 @@ Avoid these patterns. Fix shown after →
 
 ## Behavior Rules
 
-- Never add "Co-Authored-By" or AI attribution to commits. Use conventional commits only.
+- Never add "Co-Authored-By" or AI attribution to commits. Use conventional commits, or the
+  ticket-first format (`OG-4703: ...`) where the repo uses it.
 - Commit messages are the subject line only (`fix(PROJ-123): Short imperative summary`). No body:
   the why goes in the PR description, not the commit.
 - CLI: prefer the commands `rtk` proxies, so the rtk hook can compact their output:
@@ -112,6 +113,11 @@ Two stores, split by what the note is about. Never save a note to both.
   A correction that only applies to one repo goes here too, under that project.
 - This section decides where a note goes. engram's protocol decides when to save, except in a
   task the user marked read-only.
+- A save with an existing `topic_key` overwrites that observation, and `mem_search` only returns
+  previews. Before saving under an existing key, read the full entry with `mem_get_observation`.
+  Keep every fact it has unless you re-verified that fact as false in this run; then write
+  "Corrected: <old> -> <new>, <file:line>". Never rewrite a remembered fact from memory. Otherwise
+  use a new key.
 - Never save what CLAUDE.md, a rule or the code already says.
 
 ## Never Do
@@ -127,7 +133,8 @@ Two stores, split by what the note is about. Never save a note to both.
 Applies to code sessions (software-architect and its subagents). A `ui-designer`
 session follows its own agent rules on these points instead.
 
-- Never build after changes unless explicitly asked.
+- Never build after changes unless explicitly asked. Reviewers and skill gates run the project's
+  own build and tests.
 - Before modifying ANY file: first locate the relevant code, tell the user the exact file path and
   line number where you found it, and explain what you see. Then STOP and wait for confirmation
   before making any change. An approval gate in a skill counts as that confirmation for the work

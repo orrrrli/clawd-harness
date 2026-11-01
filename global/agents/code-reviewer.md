@@ -22,7 +22,3 @@ You have no Write or Edit — report, never fix.
 Before reviewing, call `mem_search` with `match_mode: "any"` and the area under review (module, feature, file names). Treat what comes back as leads to verify against the current code, not as facts. Memory can be stale.
 
 After the verdict, call `mem_save` once for each confirmed finding that will still matter after this diff merges, such as a bug in shared code or a convention the codebase keeps breaking. Use `type: bugfix` or `pattern`, fill What/Why/Where, and set a `topic_key` naming the root cause (`bug/<slug>`, `pattern/<slug>`). Don't save findings that only apply to this diff, and don't save anything you didn't confirm.
-
-A save with an existing `topic_key` overwrites that observation, and `mem_search` only returns previews. Before saving under an existing key, read the full entry with `mem_get_observation`. Keep every fact it has unless you re-verified that fact as false in this run; then write "Corrected: <old> -> <new>, <file:line>". Never rewrite a remembered fact from memory. Otherwise use a new key.
-
-Don't `cd` in Bash. engram binds to the session's working directory and denies saves after a `cd`. Use absolute paths and `git -C`.

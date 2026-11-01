@@ -1,7 +1,7 @@
 ---
 name: audit-layer-boundaries
 stacks: [web]
-description: Scan the codebase for the three architectural violations that break the layer contract in this project. Use when adding new features, after a large refactor, or whenever you suspect imports have drifted.
+description: Scan the codebase for the three architectural violations that break a layered TypeScript contract. Use when adding new features, after a large refactor, or whenever you suspect imports have drifted.
 ---
 
 # Audit Layer Boundaries
@@ -83,7 +83,7 @@ rg "throw new.*Error" repositories/ --context 5
 
 For Pattern 3, also scan for:
 - Calls to `prisma.inventoryItem.findMany` (or similar) BEFORE a `prisma.$transaction` in the same method — this is usually a non-atomic pre-check
-- Arithmetic comparisons involving `itemsPrice`, `taxPrice`, `shippingPrice`, `totalPrice` inside repository methods
+- Arithmetic comparisons on money or other domain fields inside repository methods
 
 ### 2. Report
 
@@ -103,7 +103,7 @@ For each approved fix, follow the pattern exactly:
    - If yes: add the needed export to the existing repository file.
    - If no: create `repositories/<name>.repository.ts` with re-exports from infrastructure.
 2. Update the use-case import.
-3. Run `pnpm test` — confirm no regressions.
+3. Run the project's test command — confirm no regressions.
 
 **Pattern 2 fix steps:**
 1. Copy the function body from the imported repository into the importing one (inline it).

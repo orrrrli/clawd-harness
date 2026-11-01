@@ -14,6 +14,13 @@ case "$subject" in
     "Merge "*|"Revert "*|"fixup! "*|"squash! "*|"amend! "*) exit 0 ;;
 esac
 
+# Subject only: a second non-empty line is a body or a trailer.
+lines=$(sed '/^# -* >8 -*$/,$d' "$1" | grep -v '^#' | grep -c '[^[:space:]]')
+if [ "$lines" -gt 1 ]; then
+    echo "ERROR: Commit message must be the subject line only." >&2
+    exit 1
+fi
+
 conventional='^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([^)]+\))?!?: .+'
 ticket='^[A-Z][A-Z0-9]{1,9}-[0-9]+(\([^)]+\))?!?: .+'
 

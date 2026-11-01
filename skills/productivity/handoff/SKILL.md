@@ -43,7 +43,7 @@ git branch --show-current
 Also check:
 - Any `.claude/plans/` files for active plans
 - Recent session context from engram (`mem_context`, if available)
-- Any open TODO comments in recently touched files (`rg "TODO|FIXME|HACK" --changed-files` if applicable)
+- Any open TODO comments in the files from `git diff --name-only HEAD` (`rg "TODO|FIXME|HACK" <files>`)
 
 ---
 

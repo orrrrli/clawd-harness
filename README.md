@@ -576,7 +576,7 @@ and the `ponytail` and [`i-have-adhd`](https://github.com/ayghri/i-have-adhd) pl
 | `global/githooks/commit-msg` | Commit message hook, referenced via `core.hooksPath` |
 | `global/githooks/post-checkout` | Links the local Claude harness and ignored `.env*` files into new worktrees, same `core.hooksPath` |
 | `global/claude-hooks/` | Optional Claude Code hooks, opt-in, referenced from settings |
-| `global/statusline-command.sh` | Statusline, linked by `harness.sh --global` |
+| `global/statusline-command.sh` | Fallback statusline, linked by `harness.sh --global`, used only when none is configured |
 | `~/.claude/runtime-mode` | Not in the repo. `light` or `full` default for spec-apply and spec-verify; missing = `full`. A trailing word on the command overrides it for one run |
 | `global/behavior.md` | How the agent writes and acts, linked as `~/.claude/behavior.md` by `harness.sh --global` |
 | `PERSISTENT-MEMORY.md` | Auto memory + engram memory guide |

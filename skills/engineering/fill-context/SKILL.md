@@ -94,21 +94,14 @@ compact them, so their full output lands in context. Skip `node_modules`, `.git`
 `.next`, `dist`, `build`, `DerivedData`, `coverage`.
 
 ### 1.3 Domain entities (schema + models)
-```bash
-cat prisma/schema.prisma 2>/dev/null
-cat src/Domain/**/*.cs 2>/dev/null | head -200
-find . -name "*.sql" -not -path '*/node_modules/*' | head -5 | xargs cat 2>/dev/null | head -100
-```
+Read `prisma/schema.prisma`, the entity files under `src/Domain/`, and up to five
+`*.sql` files outside `node_modules`, whichever exist.
 
 ### 1.4 README
-```bash
-cat README.md 2>/dev/null | head -80
-```
+Read the first 80 lines of `README.md`.
 
 ### 1.5 Existing context
-```bash
-cat CLAUDE.md 2>/dev/null && ls .claude/ 2>/dev/null
-```
+Read `CLAUDE.md` and list `.claude/`.
 
 ### 1.6 Engineering conventions
 Linter, formatter and test configs for the detected stack: `.eslintrc*`,

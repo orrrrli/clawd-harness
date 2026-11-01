@@ -75,8 +75,8 @@ Story (`FS-` ID) must work from the UI against the real backend.
 
 ## 3. Load the project's rules
 
-Find the context index: `CLAUDE.md` at the repo root, else `.claude/CLAUDE.md`,
-else the parent directory's `.claude/` (monorepo). Read it and the files it links
+Find the context index: `CLAUDE.md` at the repo root, else `AGENTS.md`, else the
+parent directory's `CLAUDE.md` (hub). Read it and the files it links
 under Engineering and Business, mainly `engineering/standards.md`,
 `engineering/testing.md`, `business/rules.md`.
 
@@ -166,17 +166,13 @@ the criterion failing, it is ✗ regardless of what the tests say.
 - **Spec 1, acceptance criteria:** only the criteria this change is due to
   satisfy. Check behavior, not that some code exists for it.
   ✓ = a test exercises the behavior (at any layer), passes, and fails under the
-  mutation check.
+  mutation check, or the browser check confirmed it.
   ~ PARTIAL = the code does it but no test proves it, or the test stays green
   under the mutation (it does not detect the fault).
   A layer the AC names but no test covers (e.g. the HTTP status) is a minor
   finding, not a downgrade.
-- **Spec 2, code quality** (in-scope lines only): duplication, naming,
-  architecture boundaries, control flow, error handling, function size, dead
-  code, tests that exercise the real path instead of a mock of it, and tests
+- **Spec 2, code quality** (in-scope lines only): your agent's list, plus tests
   that seed state the product's own entry points cannot produce.
-
-Write the reasoning before each verdict.
 
 ## 6. Report
 

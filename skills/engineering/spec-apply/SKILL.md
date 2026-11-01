@@ -203,9 +203,7 @@ the checklist resolved in Phase 0.
 
 3. **Read the project context index** — find it using this fallback order:
    ```
-   CLAUDE.md (standard fill-context structure — root of the repo)
-   → .agents/CONTEXT.md (alt structure)
-   → AGENTS.md (alt structure)
+   CLAUDE.md at the repo root → AGENTS.md → the parent directory's CLAUDE.md (hub)
    ```
 
    Once you find the index, read it to locate these files (most will be linked in the index):
@@ -300,14 +298,7 @@ Rules:
 - **Make the Phase 2.5 tests pass. Never edit, skip, delete or weaken them**, and never
   touch test or CI config to get green. If a test looks wrong, STOP and report it: a wrong
   test usually means an ambiguous AC, and that is the user's call.
-- **Apply ponytail principles during implementation:**
-  1. **Does this need to exist at all?** Speculative need = skip it, say so in one line. (YAGNI)
-  2. **Already in this codebase?** A helper, util, type, or pattern that already lives here → reuse it. Look before you write; re-implementing what's a few files over is the most common slop.
-  3. **Stdlib does it?** Use it.
-  4. **Native platform feature covers it?** `<input type="date">` over a picker lib, CSS over JS, DB constraint over app code.
-  5. **Already-installed dependency solves it?** Use it. Never add a new one for what a few lines can do.
-  6. **Can it be one line?** One line.
-  7. **Only then:** the minimum code that works.
+- **Apply the ponytail ladder during implementation.** Bug fixes go to the root cause.
 - **Follow the coding conventions and patterns** from:
   - `engineering/standards.md` (naming, structure, test strategy)
   - `business/rules.md` (domain constraints that code must enforce)
@@ -316,7 +307,6 @@ Rules:
 - No refactoring outside the Story scope — note suggestions after completing
 - If you discover something unexpected mid-implementation, STOP and report it
 - **Mark deliberate simplifications with a `ponytail:` comment** (e.g., `# ponytail: using existing util instead of new class`)
-- **Bug fix = root cause, not symptom.** Before you edit, grep every caller of the function you're about to touch. The lazy fix IS the root-cause fix: one guard in the shared function is a smaller diff than a guard in every caller.
 
 After each file change, state: file path + what changed + why.
 
@@ -371,7 +361,7 @@ git commit -m "<type>(<SCOPE_ID>): <Imperative summary>"
 
 Rules:
 - **Conventional Commits format** (`feat`, `fix`, `refactor`, `test`, …) — projects set up by
-  `harness.sh` reject any other subject through the git `commit-msg` hook that
+  `harness.sh` reject any subject that is neither conventional nor ticket-first through the git `commit-msg` hook that
   `core.hooksPath` points to in clawd-harness (`global/githooks/`).
   Pick the type that matches the Story.
 - **Subject line only — no body, no trailers.** The scope is the Story ID (or the Task ID on a
