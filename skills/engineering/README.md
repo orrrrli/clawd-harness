@@ -6,10 +6,11 @@ Code-specific skills: architecture audits, spec-driven delivery, testing and deb
 - **[audit-layer-boundaries](./audit-layer-boundaries/SKILL.md)** — Scan the codebase for the three architectural violations that break the layer contract in this project.
 - **[context-sync](./context-sync/SKILL.md)** — Promote the engram notes saved since the last sync into the project's CLAUDE.md and .claude/ files, one approved diff per file, so the context files stay the source of truth.
 - **[diagnose](./diagnose/SKILL.md)** — Disciplined diagnosis loop for hard bugs and performance regressions. Reproduce → minimise → hypothesise → instrument → fix → regression-test.
-- **[dotnet-clean-architecture](./dotnet-clean-architecture/SKILL.md)** — Scan a .NET Clean Architecture solution for the five violations that break the dependency rule.
+- **[dotnet-clean-architecture](./dotnet-clean-architecture/SKILL.md)** — Author or audit a vertical slice in an ASP.NET Core Clean Architecture + CQRS codebase.
 - **[fill-context](./fill-context/SKILL.md)** — Build or regenerate the full .claude/ context tree by scanning the codebase and grilling the developer on what can't be inferred from code alone.
 - **[improve-codebase-architecture](./improve-codebase-architecture/SKILL.md)** — Find deepening opportunities in a codebase, informed by the .claude/ context tree and past rejections in engram, presented as a claude.ai Artifact report. Manual only.
 - **[migrate-module](./migrate-module/SKILL.md)** — Port a legacy codebase module by module with the legacy code as the spec: map the modules once into `.claude/migration.md`, then per module a coverage-checked behavior inventory, one approval, and test-first capabilities with golden cases from the legacy functions.
+- **[pr-body](./pr-body/SKILL.md)** — Write a pull request title and body: sections, length and writing rules.
 - **[prd-to-github-backlog](./prd-to-github-backlog/SKILL.md)** — Turn a PRD/spec into a GitHub Project with a full engineering backlog: epics → vertical-slice `fullstack` stories → task sub-issues with their own area, organized by phase and sprint.
 - **[project-bootstrap](./project-bootstrap/SKILL.md)** — Scaffold a brand-new full-stack project in one pass: a working skeleton plus exactly one vertical slice implemented end-to-end.
 - **[prompt-rewrite](./prompt-rewrite/SKILL.md)** — Audit or rewrite LLM instructions (a skill, CLAUDE.md, agent definition, system prompt, tool description or a single prompt) against Anthropic's prompting guidance for current Claude models.

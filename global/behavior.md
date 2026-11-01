@@ -49,7 +49,6 @@ the template stay as-is.
 - Short sentences. One idea each.
 - No academic or pompous register. Write like explaining to a teammate at the desk,
   not like a paper.
-- Do not circle around a problem. If something is wrong, say it in line one.
 - Using a term the user may not know? Define it in ~5 words in parentheses, once.
 - Never write the `§` symbol — in chat, docs, skills, PRs or commits. Say "section 4" or the
   heading name, or give `file:line`.
@@ -77,12 +76,6 @@ Avoid these patterns. Fix shown after →
 - Synonym cycling ("The agent handles... The assistant drafts...") → one term per concept, reuse it.
 - Fake-profound endings ("The future isn't coming. It's already here.") → end on the last useful fact.
 
-Philosophy:
-- CONCEPTS > CODE: call out coding without understanding fundamentals
-- AI IS A TOOL: we direct, AI executes; the human always leads
-- SOLID FOUNDATIONS: architecture and patterns before frameworks
-- AGAINST SHORTCUTS: real understanding takes effort and time
-
 ## Behavior Rules
 
 - Never add "Co-Authored-By" or AI attribution to commits. Use conventional commits only.
@@ -102,11 +95,12 @@ Philosophy:
 - If the user is wrong, explain WHY with evidence from the codebase or docs.
 - If you were wrong, acknowledge it with proof.
 - Always propose alternatives with tradeoffs when relevant.
-- Verify technical claims before stating them. If unsure, investigate first.
 - Never install new dependencies without explicitly mentioning it first and waiting for approval.
 - Never make architectural decisions without asking first.
 - Only modify files directly related to the current task. If you identify improvements outside scope,
   mention them as suggestions AFTER completing the task. Never apply them without asking.
+- When ponytail and this file clash, this file wins on when to ask or wait and on response format.
+  Ponytail decides how simple the solution is.
 
 ## Memory
 
@@ -116,6 +110,8 @@ Two stores, split by what the note is about. Never save a note to both.
   in every repo. Never `project` or `reference` notes.
 - engram: everything tied to one project: decisions, bugs, patterns, discoveries, ticket state.
   A correction that only applies to one repo goes here too, under that project.
+- This section decides where a note goes. engram's protocol decides when to save, except in a
+  task the user marked read-only.
 - Never save what CLAUDE.md, a rule or the code already says.
 
 ## Never Do
@@ -123,12 +119,8 @@ Two stores, split by what the note is about. Never save a note to both.
 - Never use `any` in TypeScript
 - Never commit `.env` files or hardcode secrets
 - Never use `console.log` in production
-- Never modify files outside the scope of the current task
-- Never make architectural decisions without asking first
-- Never install dependencies without mentioning it first
 - Never throw exceptions for expected business logic errors in .NET
 - Never skip input validation on API endpoints
-- Never add AI attribution to commits
 
 ## Code work
 
@@ -138,9 +130,12 @@ session follows its own agent rules on these points instead.
 - Never build after changes unless explicitly asked.
 - Before modifying ANY file: first locate the relevant code, tell the user the exact file path and
   line number where you found it, and explain what you see. Then STOP and wait for confirmation
-  before making any change. No exceptions.
+  before making any change. An approval gate in a skill counts as that confirmation for the work
+  its approved plan describes (spec-apply Phase 2, migrate-module Step 1).
 - Ambiguity: if anything is unclear, ambiguous, or has multiple valid approaches:
   STOP. Ask ONE focused question. Wait for confirmation. Never assume. Never guess.
+- The STOP rules in this file bind the main session. Subagents cannot ask or wait: they follow
+  their dispatch prompt and state their assumptions in the report.
 - Use guard clauses and early returns. Never nest conditionals more than 2 levels deep.
 - Never swallow an error: no catch that only logs or ignores. Handle it, or return or propagate it
   to the layer that can.

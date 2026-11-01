@@ -1,39 +1,29 @@
 # Persistent Memory Guide
 
-This stack uses two memory layers. **claude-mem** captures what happens in the main session on its own. **engram** holds what subagents confirm and save.
+This stack uses two memory stores, split by what the note is about (see Memory in `global/behavior.md`). **Auto memory** holds `user` and `feedback` notes that hold in every repo. **engram** holds everything tied to one project.
 
 ---
 
 ## Overview
 
-| Layer | System | Purpose | Trigger |
-|-------|--------|---------|---------|
-| **Automatic** | claude-mem | Main session: *"what we did last time"*, decisions, patterns | Hooks, with no action from you |
-| **Subagent** | engram | Findings a subagent confirmed that outlive the diff (bugs in shared code, broken conventions) | The agent calls `mem_save` |
+| Store | Holds | Trigger |
+|-------|-------|---------|
+| **Auto memory** | `user` and `feedback` notes that hold in every repo, in the agent's `memory:` directory | Loaded every session |
+| **engram** | Everything tied to one project: decisions, bugs, patterns, discoveries, ticket state | The session or agent calls `mem_save` |
 
-**The flow**: claude-mem records the main session on its own in the background. Subagents search engram before they work and save to it after.
+**The flow**: the main session saves to engram on engram's protocol. Subagents search engram before they work and save to it after.
 
 ---
 
-## How They Complement Each Other
+## How engram Is Used
 
-### claude-mem
-- **Automatic**: observes the session through hooks — nothing to call, nothing to remember to do
-- **Injected at startup**: prior work arrives as context when a session opens
-- **Searchable**: earlier sessions can be queried by meaning, not just keywords
-- **Not documented here**: it is a Claude Code plugin with its own docs. Run the
-  `claude-mem:how-it-works` skill for how it captures and where it stores things.
-  Duplicating that here would just rot.
-
-### engram (subagents only)
-- **Why it exists**: subagents can't write to claude-mem. Its MCP is read-only
-  and it has no subagent hooks. engram exposes `mem_save` as an MCP tool, so a
+- **Why subagents can use it**: engram exposes `mem_save` as an MCP tool, so a
   read-only reviewer (`disallowedTools: Write, Edit`) can still save.
 - **Deliberate, not automatic**: nothing is captured unless the agent calls
   `mem_save`. Its `SubagentStop` passive capture stored nothing in testing, so
   don't count on it.
-- **Who uses it**: `code-reviewer`, `debugger` and `security-auditor`, each
-  with a Memory section in its agent file. `test-writer` and `business-analyst`
+- **Who uses it**: the main session, plus `code-reviewer`, `debugger` and
+  `security-auditor`, each with a Memory section in its agent file. `test-writer` and `business-analyst`
   don't: their knowledge already lives in `testing.md` and `business/rules.md`.
   The reviewer's section says: run
   `mem_search` (`match_mode: "any"`) before reviewing and treat hits as leads,
@@ -42,23 +32,9 @@ This stack uses two memory layers. **claude-mem** captures what happens in the m
   read the full entry with `mem_get_observation` (search only returns previews)
   and keep every fact not re-verified as false.
 
-**The split, on purpose**: the main session stays on claude-mem; subagents use
-engram.
-- For: nothing is lost (the claude-mem history stays), automatic capture keeps
-  running, and it's cheap to reverse.
-- Against: two memories, each knowing half. What the reviewer finds lives in
-  engram, and the main session doesn't see it unless it searches there.
-
 ---
 
 ## Configuration
-
-### 1. claude-mem
-
-Installed as a Claude Code plugin; it needs no configuration here. See the
-`claude-mem:how-it-works` skill.
-
-### 2. engram
 
 `harness.sh --global` checks for it and prints these commands, but never runs
 them (same rule as the other MCP servers). Run them once per machine:
@@ -94,13 +70,7 @@ A repo added later needs both lines. Check the result with
 
 ## Searching Memory
 
-### claude-mem (Automatic)
-Claude searches it on its own when you ask things like:
-- *"What did we work on last time?"*
-- *"What decisions were made about authentication?"*
-
-It does not see engram. For what subagents found, search engram directly:
-`mem_search` from the session, or `engram search "<query>" --project <p> --match any`,
+Search engram with `mem_search` from the session, or `engram search "<query>" --project <p> --match any`,
 or browse it with `engram tui`. Same-file findings get flagged as conflicts.
 Resolve them there, since the reviewer has no `mem_judge`.
 

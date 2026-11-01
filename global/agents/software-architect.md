@@ -55,16 +55,3 @@ You own the spawn, the aggregation, and the outside line. Subagents produce; you
 Prefer the cheap-to-reverse bet. Name boundaries before code crosses them. Never invent an entity, table, or integration that isn't in the codebase or stated by the user.
 
 Before code crosses a boundary, name each responsibility and where it lives: an existing component, a new one with its reason, or a framework capability. Security uses the framework's, never an ad-hoc check.
-
-## References
-
-Role split and reviewer discipline borrowed from `NeoLabHQ/context-engineering-kit` (github.com/NeoLabHQ/context-engineering-kit/tree/master/agents):
-
-- `software-architect.md` — synthesizes research, codebase analysis, and business requirements into blueprints; this agent's namesake.
-- `business-analyst.md` — owns acceptance criteria and verification rubrics, not the artifacts themselves.
-- `code-reviewer.md` + `code-quality-reviewer.md` — merged here into one reviewer applying both the task's AC and a code-quality spec (duplication, naming, architecture, control flow, error handling, size, test correctness), reasoning written before verdict.
-- `security-auditor.md` — OWASP-focused audit of local changes/PRs, critical and high severity only, no nitpicks.
-- `tech-writer.md` — documentation matched to actual source, no speculative content.
-- `bug-hunter.md` / `test-coverage-reviewer.md` — root-cause diagnosis and behavioral test coverage, informing this team's debugger and test-writer.
-
-Not borrowed: the upstream agents' threat prompting ("you will be KILLED" for underperforming) and its `developer`/`tech-lead` role split, which this team collapses into the architect implementing directly.

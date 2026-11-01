@@ -3,8 +3,7 @@ name: handoff
 description: >
   Generate a structured handoff document for the current session — what was done,
   current state, pending work, blockers, and next steps — and copy it to the OS
-  clipboard to paste into the next chat. Writes no file (unlike
-  claude-mem:handoff, which writes HANDOFF.md). Use when the user says /handoff
+  clipboard to paste into the next chat. Writes no file. Use when the user says /handoff
   or wants to hand the session to another chat or person via clipboard.
 version: "1.3.0"
 modes: [architect]
@@ -16,7 +15,7 @@ argument-hint: "What will the next session be used for?"
 
 Generate a complete, accurate handoff document by examining real project state — not from memory alone, not from guesses.
 
-**Core principle:** Every claim in the handoff must be verifiable from `git`, files, or claude-mem. No hallucinated state.
+**Core principle:** Every claim in the handoff must be verifiable from `git`, files, or engram. No hallucinated state.
 
 If the user passed arguments, treat them as a description of what the next session
 will focus on and tailor the document accordingly.
@@ -43,7 +42,7 @@ git branch --show-current
 
 Also check:
 - Any `.claude/plans/` files for active plans
-- Recent session context from claude-mem (`get_observations` for last 5–10 obs if available)
+- Recent session context from engram (`mem_context`, if available)
 - Any open TODO comments in recently touched files (`rg "TODO|FIXME|HACK" --changed-files` if applicable)
 
 ---
@@ -127,7 +126,7 @@ After copying, tell the user briefly — e.g. "Copied to clipboard — paste int
 
 ### Optional — save to memory
 
-If the session had significant architectural decisions, decisions about approach, or non-obvious context, **offer** to save a project memory with the key facts via claude-mem. This is independent of the clipboard copy and only happens if the user accepts.
+If the session had significant architectural decisions, decisions about approach, or non-obvious context, **offer** to save a project memory with the key facts via engram (`mem_save`). This is independent of the clipboard copy and only happens if the user accepts.
 
 ---
 

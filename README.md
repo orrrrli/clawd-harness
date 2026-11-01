@@ -1,6 +1,6 @@
 # AI Engineering Stack
 
-A personal Claude Code harness: a 7-agent team, 20 skills and the scripts that
+A personal Claude Code harness: a 7-agent team, 21 skills and the scripts that
 wire them into any project. Clone it once, run one script per machine and one
 per project, and every Claude Code session works the same way, with the same
 rules, the same reviewers and the same delivery loop.
@@ -85,7 +85,7 @@ lose ponytail in its subagents.
 
 ### Skills
 
-20 skills across 3 categories. Each category directory has its own README:
+21 skills across 3 categories. Each category directory has its own README:
 [engineering](./skills/engineering/README.md), [ui](./skills/ui/README.md),
 [productivity](./skills/productivity/README.md).
 The **Origin** column is detailed in [Credits and sources](#credits-and-sources).
@@ -94,6 +94,7 @@ The **Origin** column is detailed in [Credits and sources](#credits-and-sources)
 |-------|--------|--------------|--------|
 | **spec-apply** | all | Implements a GitHub Story across every layer in one cycle (its Tasks are the checklist): explore, propose, failing tests, apply, verify, commit, PR | Own |
 | **spec-verify** | all | Checks an implementation against its acceptance criteria in a fresh code-reviewer, with a mutation check and, in full mode, a browser check against the real stack | Own |
+| **pr-body** | all | Writes a PR title and body: sections, length and writing rules | Own |
 | **prd-to-github-backlog** | all | PRD to GitHub Project: epics, vertical-slice (`fullstack`) stories, tasks per area, sprints, estimates | Own |
 | **fill-context** | all | Scans the codebase and interviews you to write the `.claude/` context tree | Own |
 | **context-sync** | all | Proposes moving the engram notes saved since the last run into the `.claude/` context files, one approved diff per file | Own |
@@ -103,7 +104,7 @@ The **Origin** column is detailed in [Credits and sources](#credits-and-sources)
 | **improve-codebase-architecture** | all | Finds deepening opportunities using the .claude/ tree and engram; Artifact report | mattpocock/skills |
 | **migrate-module** | all | Maps a legacy codebase into ordered modules, then ports one module at a time with the legacy code as the spec: coverage-checked inventory, one approval, test-first capabilities, golden cases from the legacy functions | Own |
 | **audit-layer-boundaries** | web | Scans for the three violations that break the layer contract | Own |
-| **dotnet-clean-architecture** | dotnet | Scans a .NET Clean Architecture solution for dependency-rule violations | Own |
+| **dotnet-clean-architecture** | dotnet | Author or audit a vertical slice in an ASP.NET Core Clean Architecture + CQRS codebase | Own |
 | **android-clean-architecture** | android | Clean Architecture patterns and a layer scan for Android/KMP | affaan-m/everything-claude-code |
 | **project-bootstrap** | dotnet | Skeleton plus one vertical slice end to end | Own |
 | **write-swift** | ios | Modern Swift: value types, Swift 6 concurrency, generics, Swift Testing | emilkowalski/skills |
@@ -330,8 +331,8 @@ Setup, once per environment:
   comment) forces it.
 - Seen working on 2026-10-16: the session runs as `root` (`HOME=/root`), and
   `"agent": "software-architect"` in the written `settings.json` is honored.
-- `RTK.md` is skipped. These don't reach the cloud at all: plugins (claude-mem,
-  engram, ponytail), `rtk`, the NotchBuddy statusline and local MCP servers.
+- `RTK.md` is skipped. These don't reach the cloud at all: plugins (engram,
+  ponytail), `rtk`, the NotchBuddy statusline and local MCP servers.
   Cloud sessions have no memory between sessions.
 
 ## Per-project installation
@@ -491,17 +492,15 @@ replaces another.
 |------|---------|--------------|
 | **rtk** | 0.47 | CLI proxy that filters and summarizes command output *before* it reaches the context. `git`, `ls`, `find`, `rg`, `docker`, `dotnet`, `pnpm` and friends get rewritten transparently by a hook. 60-90% fewer tokens on routine dev operations. |
 | **headroom** | 0.37 | Context optimization layer for LLM applications — a proxy that compresses traffic to the model, plus stored memories and a savings dashboard (`headroom savings`, `headroom dashboard`). |
-| **claude-mem** | — | Persistent memory for the main session, captured by hooks with nothing to call. Prior work is injected as context when a session opens. |
-| **[engram](https://github.com/Gentleman-Programming/engram)** | 3.0 | Memory for subagents. `code-reviewer`, `debugger` and `security-auditor` search it before working and save confirmed findings through MCP (`mem_search`, `mem_save`), since it can't write files and claude-mem is read-only to subagents. |
+| **[engram](https://github.com/Gentleman-Programming/engram)** | 3.0 | Project memory: decisions, bugs, patterns and ticket state, through MCP (`mem_search`, `mem_save`). `code-reviewer`, `debugger` and `security-auditor` search it before working and save confirmed findings. |
 | **[ego-browser](https://github.com/citrolabs/ego-lite)** | 2.0 | Browser for agents (ego lite app + skill, macOS). `spec-verify` uses it in web projects to check acceptance criteria that are visible in the UI; without it those criteria stay `~ PARTIAL`. Install: `npx skills add citrolabs/ego-lite -g -a claude-code`. |
 | **[graphify](https://github.com/Graphify-Labs/graphify)** | 0.8 | Turns a codebase into a queryable knowledge graph — tree-sitter AST parsing across 37 languages, plus docs, SQL and PDFs. Ask `graphify query "..."` instead of grepping; `path A B` traces how two things connect, `affected X` finds what a change breaks. |
 | **[ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)** | 2.13 | Local design database (font pairings, palettes, UX rules, SwiftUI guidelines) with a stdlib-only Python search script. Install as a plugin, one command at a time: `/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill`, then `/plugin install ui-ux-pro-max@ui-ux-pro-max-skill`. |
 
 `rtk` trims what the tools send; `headroom` trims what reaches the model;
-`claude-mem` remembers the main session; `engram` remembers what subagents
-found; `graphify` answers questions the code can already answer, so the context
-tree does not have to. The two memories are split on purpose and don't see each
-other. See `PERSISTENT-MEMORY.md` for the split and the engram setup.
+`engram` remembers what happened in each project; `graphify` answers questions
+the code can already answer, so the context tree does not have to. See
+`PERSISTENT-MEMORY.md` for the memory split and the engram setup.
 
 Graphify writes to `graphify-out/` (`graph.json`, `graph.html`, and a
 `GRAPH_REPORT.md` naming the god nodes — the entities everything else touches).
@@ -517,7 +516,7 @@ Pending, in order:
 1. **Telemetry.** `tools/telemetry.py` (Python stdlib, no deps) reading
    `~/.claude/projects/*/*.jsonl`: skills fired (and never fired), agents
    dispatched, failed tool calls, tokens per project. Complements
-   `claude-mem:agent-cost-report` (cost) and `rtk gain` (token savings). Its
+   `rtk gain` (token savings). Its
    output decides which plugins and skills to prune.
 2. **Evals.** A fixture repo with seeded bugs; run `code-reviewer` headless
    (`claude -p --output-format json`) three times and score bugs found against
@@ -559,7 +558,7 @@ structure; adapted ones say in their own file what changed and why.
 
 ### Tools
 
-[rtk](https://github.com/rtk-ai/rtk), headroom, claude-mem,
+[rtk](https://github.com/rtk-ai/rtk), headroom,
 [engram](https://github.com/Gentleman-Programming/engram),
 [ego-browser](https://github.com/citrolabs/ego-lite),
 [graphify](https://github.com/Graphify-Labs/graphify),
@@ -580,4 +579,4 @@ and the `ponytail` and [`i-have-adhd`](https://github.com/ayghri/i-have-adhd) pl
 | `global/statusline-command.sh` | Statusline, linked by `harness.sh --global` |
 | `~/.claude/runtime-mode` | Not in the repo. `light` or `full` default for spec-apply and spec-verify; missing = `full`. A trailing word on the command overrides it for one run |
 | `global/behavior.md` | How the agent writes and acts, linked as `~/.claude/behavior.md` by `harness.sh --global` |
-| `PERSISTENT-MEMORY.md` | claude-mem + engram memory guide |
+| `PERSISTENT-MEMORY.md` | Auto memory + engram memory guide |
