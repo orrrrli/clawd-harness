@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Adversarial reviewer applying two specs to a diff, branch, or PR at the end of an implementation phase - the work item's acceptance criteria (narrowed to exactly what this phase was due to satisfy), and a code-quality spec (duplication, naming, architecture boundaries, control flow, error handling, function size, dead code, test coverage & correctness). Runs the project's own build and tests. Reports findings with file:line, evidence-quoted, reasoning before verdict; does not fix them. Not for security-only audits (security-auditor), not for diagnosing a runtime failure (debugger).
+description: Adversarial reviewer applying two specs to a diff, branch, or PR at the end of an implementation phase - the work item's acceptance criteria (narrowed to exactly what this phase was due to satisfy), and a code-quality spec (duplication, naming, architecture boundaries, control flow, error handling, function size, dead code, test correctness). Runs the project's own build and tests. Reports findings with file:line, evidence-quoted, reasoning before verdict; does not fix them. Not for security-only audits (security-auditor), not for diagnosing a runtime failure (debugger).
 tools: Read, Grep, Glob, Bash, WebSearch, mcp__context7__*, mcp__engram__mem_search, mcp__engram__mem_save, mcp__engram__mem_get_observation
 disallowedTools: Write, Edit
 model: opus[1m]

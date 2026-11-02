@@ -41,7 +41,6 @@ GLOBAL_SKILLS=(
     engineering/context-sync
     engineering/dotnet-clean-architecture
     engineering/fill-context
-    engineering/migrate-module
     engineering/pr-body
     engineering/prd-to-github-backlog
     engineering/prompt-rewrite
