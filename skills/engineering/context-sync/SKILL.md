@@ -18,7 +18,7 @@ argument-hint: "[project] [--since YYYY-MM-DD]"
 
 engram collects decisions as they happen. The context files (`CLAUDE.md` and the
 `.claude/` tree that `fill-context` builds) are what agents are told to trust, and
-what `test-writer` and `business-analyst` read instead of engram. Without a sync
+what `business-analyst` reads instead of engram. Without a sync
 step the files go stale and the real rules live only in memory, in several
 versions. This skill moves the durable ones into the files, with the user deciding
 each one.

@@ -1,6 +1,6 @@
 # AI Engineering Stack
 
-A personal Claude Code harness: a 7-agent team, 21 skills and the scripts that
+A personal Claude Code harness: a 6-agent team, 21 skills and the scripts that
 wire them into any project. Clone it once, run one script per machine and one
 per project, and every Claude Code session works the same way, with the same
 rules, the same reviewers and the same delivery loop.
@@ -80,7 +80,6 @@ lose ponytail in its subagents.
 | **code-reviewer** | Read-only. Reviews a diff against the AC and a code-quality spec |
 | **security-auditor** | Read-only. Critical/high issues on auth and untrusted input |
 | **debugger** | Root cause of a failing test or wrong behavior, minimal fix |
-| **test-writer** | Behavioral tests in the project's existing framework |
 | **ui-designer** | Main session for visual work (pen.dev, Figma, visual frontend). Never a subagent |
 
 ### Skills
@@ -92,8 +91,8 @@ The **Origin** column is detailed in [Credits and sources](#credits-and-sources)
 
 | Skill | Stacks | What it does | Origin |
 |-------|--------|--------------|--------|
-| **spec-apply** | all | Implements a GitHub Story across every layer in one cycle (its Tasks are the checklist): explore, propose, failing tests, apply, verify, commit, PR | Own |
-| **spec-verify** | all | Checks an implementation against its acceptance criteria in a fresh code-reviewer, with a mutation check and, in full mode, a browser check against the real stack | Own |
+| **spec-apply** | all | Implements a GitHub Story across every layer in one cycle (its Tasks are the checklist): explore, propose, apply, verify, commit, PR | Own |
+| **spec-verify** | all | Checks an implementation against its acceptance criteria in a fresh code-reviewer and, in full mode, a browser check against the real stack | Own |
 | **pr-body** | all | Writes a PR title and body: sections, length and writing rules | Own |
 | **prd-to-github-backlog** | all | PRD to GitHub Project: epics, vertical-slice (`fullstack`) stories, tasks per area, sprints, estimates | Own |
 | **fill-context** | all | Scans the codebase and interviews you to write the `.claude/` context tree | Own |
@@ -130,8 +129,8 @@ acceptance criteria on GitHub.
 ```
 PRD
   -> prd-to-github-backlog   Epics -> fullstack Stories (FS-<EPIC>-<n>) -> Tasks, each with its area
-  -> spec-apply <STORY>      one worktree, one cycle across every layer, two commits (red tests, code)
-  -> spec-verify             AC, code quality, mutation check; e2e + browser check on the real stack
+  -> spec-apply <STORY>      one worktree, one cycle across every layer, one commit
+  -> spec-verify             AC, code quality, existing suite; e2e + browser check on the real stack
   -> one PR per Story        draft with deferred-checks in light mode, ready after a full-mode run
 ```
 
@@ -145,15 +144,14 @@ PRD
 
 #### How spec-apply writes code
 
-The spec drives the work. The tests are the spec made executable, and the agent that
-writes the code does not own them.
+The spec drives the work. spec-apply writes no new tests: it keeps the existing suite green
+and spec-verify checks each AC against the code.
 
 ```
 Story AC (Given/When/Then, approved)          business-analyst drafts them if missing
   -> Propose     one plan for every layer + the contract + one behavior line per AC   STOP for approval
-  -> Tests       test-writer turns the AC into failing tests, committed red and read-only
-  -> Apply       the implementer makes those tests pass (ponytail ladder), never edits them
-  -> Verify      spec-verify reruns the tests and breaks each AC's line to prove its test fails
+  -> Apply       the implementer writes the code (ponytail ladder), never edits a test
+  -> Verify      spec-verify runs the suite and checks each AC with file:line evidence
 ```
 
 **Runtime modes.** `full` unless you say otherwise. The last word of the command picks the
@@ -162,7 +160,7 @@ mode for that one run (`/spec-apply 475 light`, `/spec-verify 475 light`); witho
 
 - `light`, for when the machine is busy with other work (simulators, JVM backends):
   no stack is started. Unit, component and integration tests still run, plus the
-  review and the mutation check. The e2e test and the browser check are marked
+  review. The e2e tests and the browser check are marked
   `~ DEFERRED`, and the Story's PR opens as a draft labeled `deferred-checks`, with
   its Tasks still open.
 - `full`: each Story worktree runs its own stack (its own Postgres container and
@@ -178,20 +176,13 @@ the plan must cover, and are closed together at the end. An XL Story stops befor
 with a proposed split into thinner slices, since the Story's size is the size of the diff
 spec-verify reviews.
 
-1. **Tests come from the AC, not the code.** `test-writer` sees the AC and the approved
-   interface, never an implementation, so expected values cannot copy what the code returns.
-   It adds only a not-implemented stub when the interface does not exist yet.
-2. **The implementer cannot buy a green run.** The tests are committed after the Tests phase;
-   Verify fails if `git diff` shows them changed. A test that looks wrong stops the run and
-   goes to you, since it usually means an ambiguous AC.
-3. **Propose names responsibilities.** Each one (business rule, persistence, security,
+1. **The implementer cannot buy a green run.** It never edits a test; Verify fails if
+   `git diff` shows one changed. A test that looks wrong stops the run and goes to you, since
+   it usually means an ambiguous AC.
+2. **Propose names responsibilities.** Each one (business rule, persistence, security,
    external call, presentation) gets a place: an existing component, a new one with a reason,
    or a framework capability. This is what stops a credential check written as a bare `if`.
-4. **Passing is not enough.** For each AC, `spec-verify` breaks the implementing line once in
-   a scratch worktree. A test that stays green marks the AC `~ PARTIAL`, and the Story fails.
-
-Stories with no testable behavior (config, scaffolding) say so in Propose and skip the Tests
-phase. `tdd` stays a separate skill for test-first work outside a Story.
+`tdd` stays a separate skill for test-first work outside a Story.
 
 ## Global layer (once per machine)
 
@@ -572,7 +563,7 @@ and the `ponytail` and [`i-have-adhd`](https://github.com/ayghri/i-have-adhd) pl
 | `global/permissions.json` | Guardrail deny/ask rules, merged into `~/.claude/settings.json` by `harness.sh --global` |
 | `global/build-cloud-setup.sh` | Prints the setup script for a claude.ai/code cloud environment |
 | `harness.sh` | The only installer: project setup (`--stack` aware), `--global` for the user level, `--update` to relink only |
-| `global/agents/` | The 7-agent team |
+| `global/agents/` | The 6-agent team |
 | `global/githooks/commit-msg` | Commit message hook, referenced via `core.hooksPath` |
 | `global/githooks/post-checkout` | Links the local Claude harness and ignored `.env*` files into new worktrees, same `core.hooksPath` |
 | `global/claude-hooks/` | Optional Claude Code hooks, opt-in, referenced from settings |

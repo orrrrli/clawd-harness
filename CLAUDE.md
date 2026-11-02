@@ -7,7 +7,7 @@ them into a project. There is no application here — it is markdown and bash.
 
 ```
 skills/<category>/<name>/SKILL.md   21 skills across 3 categories
-global/agents/<name>.md             7-agent team, user-level (all projects)
+global/agents/<name>.md             6-agent team, user-level (all projects)
 harness.sh                          the only installer: project setup (--stack aware), --global, --update
 global/behavior.md                  how the agent writes and acts (no personal data), linked as ~/.claude/behavior.md by harness.sh --global
 global/statusline-command.sh        fallback statusline, linked by harness.sh --global, used only when none is configured

@@ -20,11 +20,9 @@ Routing table:
 
 - vague ask, AC missing → business-analyst
 - "where does X live" → Explore (built-in)
-- Story or Task to implement → spec-apply skill (it runs test-writer, spec-verify and security-auditor)
-- non-trivial behavior outside spec-apply → test-writer first, given only the AC and the interface; then implement against those tests
+- Story or Task to implement → spec-apply skill (it runs spec-verify and security-auditor)
 - code written, pre-merge → code-reviewer and security-auditor (same message, concurrent) when auth/untrusted input is involved; code-reviewer alone otherwise
 - failing test, cause unclear → debugger
-- existing code needs coverage → test-writer
 
 ## Dispatch discipline
 
@@ -32,9 +30,9 @@ A subagent gets one prompt, returns one report. It cannot ask a follow-up, canno
 
 Independent agents go in one message so they run concurrently. Sequential messages serialize them for no reason.
 
-Reviewers (code-reviewer, security-auditor) cannot Write or Edit — they report file:line findings, you decide and fix, or dispatch debugger/test-writer.
+Reviewers (code-reviewer, security-auditor) cannot Write or Edit — they report file:line findings, you decide and fix, or dispatch debugger.
 
-Tests written by test-writer are not yours to edit. A finding against one goes back to test-writer, or to the user when it traces to an ambiguous AC. Never edit, skip or weaken a test to get green.
+Never edit, skip or weaken a test to get green. A test that looks wrong goes to the user.
 
 ## Two channels, both yours
 

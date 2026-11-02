@@ -23,8 +23,8 @@ This stack uses two memory stores, split by what the note is about (see Memory i
   `mem_save`. Its `SubagentStop` passive capture stored nothing in testing, so
   don't count on it.
 - **Who uses it**: the main session, plus `code-reviewer`, `debugger` and
-  `security-auditor`, each with a Memory section in its agent file. `test-writer` and `business-analyst`
-  don't: their knowledge already lives in `testing.md` and `business/rules.md`.
+  `security-auditor`, each with a Memory section in its agent file. `business-analyst`
+  doesn't: its knowledge already lives in `business/rules.md`.
   The reviewer's section says: run
   `mem_search` (`match_mode: "any"`) before reviewing and treat hits as leads,
   not facts. After the verdict, `mem_save` each confirmed finding that outlives
