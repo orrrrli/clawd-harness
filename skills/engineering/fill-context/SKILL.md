@@ -7,7 +7,7 @@ description: >
   multi-file context structure (business, architecture, domains, engineering) with
   the root CLAUDE.md as the index. Use after project init or whenever context is
   missing, stale, or incomplete.
-version: "3.2.0"
+version: "3.3.0"
 modes: [architect]
 ---
 
@@ -59,10 +59,10 @@ CLAUDE.md                    # Main index — auto-loaded every session, at the 
 ├── domains/
 │   └── [entity].md          # One file per main domain entity
 ├── engineering/
-│   ├── standards.md         # Reference only: exemplar files, tooling-enforced conventions
+│   ├── standards.md         # Reference only: tooling-enforced conventions
 │   └── testing.md           # Test strategy, commands, full-stack start, e2e
 └── rules/
-    └── [area].md            # Path-scoped conventions, only when Phase 2 finds some
+    └── [area].md            # Path-scoped conventions and confirmed exemplars
 ```
 
 ---
@@ -335,10 +335,11 @@ Note all links are relative to the repo root (`.claude/business/...`), not to `.
 
 ### `rules/[area].md` — one per file type that has its own conventions
 
-Only for conventions that apply to one kind of file. Name it after the area
-(`api.md`, `ios-views.md`, `migrations.md`). Do not link rules from the root
-`CLAUDE.md`: they load on their own; one line in the index saying the folder exists
-is enough.
+Only for conventions that apply to one kind of file, and for the exemplars the developer
+confirmed in Phase 2 answer #6. An exemplar with no matching rules file gets one of its
+own. Name it after the area (`api.md`, `ios-views.md`, `migrations.md`). Do not link
+rules from the root `CLAUDE.md`: they load on their own; one line in the index saying
+the folder exists is enough.
 
 ```markdown
 ---
@@ -349,6 +350,10 @@ paths:
 # [Area] conventions
 
 - **[Rule]:** [what to do, and the concrete reason or the bug it prevents]
+
+## Copy these
+[Only confirmed exemplars, one per kind of file. Omit the section if none.]
+- **New [kind]:** copy the shape of `[path]`: [what it shows, e.g. "ErrorOr result, no try/catch"]
 ```
 
 Every glob must match at least one real file: run it with Glob before writing.
@@ -356,15 +361,11 @@ Every glob must match at least one real file: run it with Glob before writing.
 ### `engineering/standards.md`
 
 Reference only: material Claude consults, never a rule it must follow. What must hold on
-every task goes in the root `## Anti-patterns`; what must hold for one kind of file goes in
-`rules/[area].md`.
+every task goes in the root `## Anti-patterns`; what must hold for one kind of file, and
+the exemplars to copy, go in `rules/[area].md`.
 
 ```markdown
 # Engineering Standards
-
-## Reference code
-[From Phase 2 answer #6 — only the exemplars the developer confirmed]
-- `[path]`: [what it shows — e.g., "a command handler: validation, ErrorOr result, no try/catch"]
 
 ## Conventions
 [From scan — what ESLint, tsconfig and the formatter already enforce, for reference]
