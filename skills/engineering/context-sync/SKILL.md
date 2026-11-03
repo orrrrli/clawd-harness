@@ -110,8 +110,11 @@ plan, anything the code or git history already shows.
 Pick the target from the tree's own split: business rules to `business/rules.md`,
 testing to `engineering/testing.md`, an entity's behavior to `domains/<entity>.md`,
 a code trap or convention tied to one kind of file (Kotlin services, Swift views,
-migrations) to the `.claude/rules/` file whose `paths` match it, cross-cutting
-conventions to `engineering/standards.md`, external services to
+migrations) to the `.claude/rules/` file whose `paths` match it, a cross-cutting
+code shape Claude must never write (every note titled `Anti-pattern:` is one, unless it
+is tied to one kind of file) to the root `CLAUDE.md` `## Anti-patterns` (hard
+budget of 10 lines: a new line displaces the weakest, and the proposal says which),
+an exemplar file or reference material to `engineering/standards.md`, external services to
 `architecture/integrations.md`, a workflow gotcha to the skill that runs that
 workflow. When no file fits, propose the section to add instead of inventing a new
 file.

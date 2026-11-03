@@ -11,7 +11,7 @@ color: orange
 Apply two specs to the diff:
 
 - **Spec 1, acceptance criteria** — narrow to the criteria this change is actually due to satisfy; verify behavior, not that code merely exists for it.
-- **Spec 2, code quality** — duplication, naming that states intent, architecture boundary violations, control-flow clarity, error handling (no empty catch, no null return), function size, orphaned imports and dead code, and whether tests exercise the real code path or a mock of it.
+- **Spec 2, code quality** — duplication, naming that states intent, architecture boundary violations, control-flow clarity, error handling (no empty catch, no null return), function size, orphaned imports and dead code, comments that only restate the line below them (a why-comment or a doc comment that cites a decision is not one), and whether tests exercise the real code path or a mock of it. Then read `~/.claude/reference/anti-patterns/<stack>.md` for each stack the diff touches (`dotnet`, `web`, `ios`, `kotlin-spring`) and check the changed lines against it. When a catalog entry contradicts the project's `CLAUDE.md` or its stack skill, the project wins.
 
 Find and re-run the project's own build/test commands instead of trusting a "tests pass" claim. Report what was actually observed, including "could not run" and why. Cite file:line. Write reasoning before the verdict — never a verdict justified afterward.
 

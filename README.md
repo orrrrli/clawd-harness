@@ -15,6 +15,8 @@ removed. Everything targets Claude Code's own conventions (`.claude/skills/`,
   ~/.claude/  (global layer, once per machine)        your-project/  (per project)
   ┌──────────────────────────────────────┐            ┌──────────────────────────────────┐
   │ agents/   -> global/agents/          │            │ .claude/skills/<name> -> skills/  │
+  │ rules/    -> global/rules/           │            │                                   │
+  │ reference/ -> global/reference/      │            │                                   │
   │ skills/   -> 8 everyday skills       │            │   (filtered by --stack)           │
   │ settings.json  agent: architect      │            │ CLAUDE.md + .claude/ context tree │
   │ behavior.md, statusline-command.sh   │            │ core.hooksPath -> githooks/       │
@@ -188,11 +190,16 @@ spec-verify reviews.
 
 ```bash
 ~/dev/personal/clawd-harness/harness.sh --global            # full setup
-~/dev/personal/clawd-harness/harness.sh --global --update   # links only: agents, behavior, skills, statusline
+~/dev/personal/clawd-harness/harness.sh --global --update   # links only: agents, rules, behavior, skills, statusline
 ```
 
 - Symlinks `~/.claude/agents` to `global/agents/`.
   An existing `~/.claude/agents` directory is moved to `agents.bak-<timestamp>`.
+- Symlinks `~/.claude/rules` to `global/rules/`, the same way. Each file holds the code
+  anti-patterns of one stack (`code.md` for every language, `web.md`, `dotnet.md`, `ios.md`,
+  `kotlin-spring.md`) and loads only when Claude reads a file its `paths:` glob matches.
+- Symlinks `~/.claude/reference` to `global/reference/`. It holds the full anti-pattern catalog
+  per stack; only `code-reviewer` reads it, at review time.
 - Symlinks `~/.claude/behavior.md` to `global/behavior.md`. An existing file is
   moved to `behavior.md.bak-<timestamp>`. Prints a hint when `~/.claude/CLAUDE.md`
   has no `@behavior.md` line to load it.
@@ -570,4 +577,6 @@ and the `ponytail` and [`i-have-adhd`](https://github.com/ayghri/i-have-adhd) pl
 | `global/statusline-command.sh` | Fallback statusline, linked by `harness.sh --global`, used only when none is configured |
 | `~/.claude/runtime-mode` | Not in the repo. `light` or `full` default for spec-apply and spec-verify; missing = `full`. A trailing word on the command overrides it for one run |
 | `global/behavior.md` | How the agent writes and acts, linked as `~/.claude/behavior.md` by `harness.sh --global` |
+| `global/rules/` | Path-scoped code anti-patterns per stack, linked as `~/.claude/rules` by `harness.sh --global`; 10 lines per file |
+| `global/reference/anti-patterns/` | Full anti-pattern catalog per stack, linked as `~/.claude/reference`; read by `code-reviewer` only |
 | `PERSISTENT-MEMORY.md` | Auto memory + engram memory guide |

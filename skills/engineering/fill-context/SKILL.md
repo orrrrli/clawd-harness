@@ -7,7 +7,7 @@ description: >
   multi-file context structure (business, architecture, domains, engineering) with
   the root CLAUDE.md as the index. Use after project init or whenever context is
   missing, stale, or incomplete.
-version: "3.1.0"
+version: "3.2.0"
 modes: [architect]
 ---
 
@@ -59,7 +59,7 @@ CLAUDE.md                    # Main index — auto-loaded every session, at the 
 ├── domains/
 │   └── [entity].md          # One file per main domain entity
 ├── engineering/
-│   ├── standards.md         # Cross-cutting conventions (branches, PRs, comments)
+│   ├── standards.md         # Reference only: exemplar files, tooling-enforced conventions
 │   └── testing.md           # Test strategy, commands, full-stack start, e2e
 └── rules/
     └── [area].md            # Path-scoped conventions, only when Phase 2 finds some
@@ -126,6 +126,12 @@ From the scan, extract:
 - **Coding conventions** — from linter configs and file naming patterns, each
   tagged with the file glob it applies to, or "all" (this decides rule vs `standards.md`)
 - **Instruction files** — from 1.7, with the vendored ones marked
+- **Visible decisions** — what the structure shows was chosen: organized by domain,
+  feature or technical layer; how errors travel (exceptions, result types, error
+  codes); how dependencies are wired. The code shows the choice, never the reason:
+  the reason is asked in Phase 2
+- **Exemplar candidates** — 1 to 3 files per area (handler, component, test, migration)
+  that follow the dominant pattern most closely, each with one line on what it shows
 
 ---
 
@@ -143,9 +149,11 @@ Then ask ONLY these questions (all at once, numbered):
 2. **Business rules** — What are the 2-3 rules the code must NEVER break? (e.g., "Users cannot access other accounts' data", "Soft deletes only, never hard deletes")
 3. **Domain vocabulary** — Are any entity names in the code different from how the business talks about them? (e.g., "`User` in code = `Client` in the business")
 4. **Domain context** — For each entity detected, what is its core responsibility in one sentence? (Skip any that are self-evident)
+5. **Why the architecture** — "The code is organized by [visible decisions]. Why that choice, and what did you reject?" (One line per decision; skip any the developer calls accidental). In a repo with no source code yet, ask it as intent: "How will the code be organized, and why?"
+6. **Exemplars and known slop** — "These files look like the model to copy: [exemplar candidates]. Which are, and which are not? What has Claude generated here that you had to undo?" (Concrete cases: "a protocol with one implementation", "a try/catch that only rethrows"). Skip it in a repo with no source code yet: there is nothing to copy or undo. Anti-patterns then arrive later through `/context-sync`.
 
 In a hub (1.1), question 2 also asks: "Are the repos' own `CLAUDE.md` / `AGENTS.md` team
-files I must not edit?" It stays one question, so the limit of 4 holds.
+files I must not edit?" It stays one question, so the limit of 6 holds.
 
 Wait for the developer's answers before proceeding to Phase 3.
 
@@ -195,9 +203,24 @@ generate it fresh with this shape:
 ## Rules
 Path-scoped conventions in `.claude/rules/` load on their own when a matching file is read or
 edited. A new convention for one kind of file goes in the rule for that file type.
+
+## Anti-patterns
+- Never [concrete code shape]: [the case in this repo that caused it, or what breaks]
 ```
 
 Omit the `## Rules` section when no rule was written.
+
+**`## Anti-patterns` is a hard budget of 10 lines.** It lives in the root file because it
+must hold on every task, and a linked file can be skipped. Sources: Phase 2 answer #6,
+and the `rules/` candidates that apply to every file type. Each line:
+- Names a concrete code shape Claude would otherwise write: "Never create a protocol with
+  one implementation", "Never add a try/catch that only rethrows". A principle ("avoid
+  over-engineering", "keep code clean") is not a line.
+- Passes the test: would Claude do something different by default without it? If not, cut it.
+- Applies to every file type. One tied to a kind of file goes in that `rules/[area].md`.
+
+An 11th line displaces the weakest one; the budget never grows. Omit the section when
+Phase 2 named no anti-pattern.
 
 Note all links are relative to the repo root (`.claude/business/...`), not to `.claude/` itself.
 
@@ -265,6 +288,10 @@ Note all links are relative to the repo root (`.claude/business/...`), not to `.
 ## Pattern
 [from scan — e.g., "Next.js App Router with Server Actions", "Clean Architecture CQRS"]
 
+## Decisions
+[From Phase 1 visible decisions + Phase 2 answer #5. One line each; omit a decision with no reason]
+- **[Decision]:** because [reason]. Rejected: [alternative].
+
 ## Directory Structure
 [From scan — key directories only, one-line purpose each]
 - `[path]`: [what it's for]
@@ -328,14 +355,19 @@ Every glob must match at least one real file: run it with Glob before writing.
 
 ### `engineering/standards.md`
 
+Reference only: material Claude consults, never a rule it must follow. What must hold on
+every task goes in the root `## Anti-patterns`; what must hold for one kind of file goes in
+`rules/[area].md`.
+
 ```markdown
 # Engineering Standards
 
-## Conventions
-[From scan — inferred from ESLint, tsconfig, file structure patterns]
+## Reference code
+[From Phase 2 answer #6 — only the exemplars the developer confirmed]
+- `[path]`: [what it shows — e.g., "a command handler: validation, ErrorOr result, no try/catch"]
 
-## Architecture Rules
-[Key patterns the team follows — e.g., "Server Actions only, no API routes for internal calls"]
+## Conventions
+[From scan — what ESLint, tsconfig and the formatter already enforce, for reference]
 ```
 
 ---
@@ -391,8 +423,12 @@ for them in Phase 2 (within its question limit): spec-apply and spec-verify depe
    - `wc -l CLAUDE.md` is under 200. Over it → move the part that applies to one
      kind of file into a rule, and reference material into a linked file.
    - Every link in the root `CLAUDE.md` resolves to a file that exists.
+   - `## Anti-patterns` has 10 lines or fewer.
    - Tell the developer to run `/context` in a new session to see what loads at
      start, and `/doctor prompt-audit` to catch contradictions and dead references.
+   - For each rule written, tell the developer to open a new session, ask Claude to read
+     one file its glob matches (name the file), then run `/context` and confirm the rule
+     is listed. A wrong glob never errors: the rule just never loads.
 7. Print: "Context built. [N] files written ([root CLAUDE.md merged/created] + N under `.claude/`, [R] rules)."
 
 ---
@@ -401,7 +437,10 @@ for them in Phase 2 (within its question limit): spec-apply and spec-verify depe
 
 - NEVER write placeholder text like `[Entity 1]` or `[Ex: ...]` in any output file. If you don't know something, ask.
 - NEVER skip Phase 1. Asking for information the code already has wastes the developer's time.
-- NEVER ask more than 4 questions in Phase 2.
+- NEVER ask more than 6 questions in Phase 2.
+- NEVER write a generic line in any output file ("write clean code", "follow best practices",
+  "keep it readable"). Every line names a path, a decision with its reason, or a case seen
+  in this repo.
 - NEVER create a `.claude/CLAUDE.md` file. Claude Code would load it too, giving the project two instruction files to keep in sync. The index always lives in the root `CLAUDE.md` — see "Why the root CLAUDE.md is the index" above. If a stray `.claude/CLAUDE.md` is found during Phase 1, its content must be merged into the root `CLAUDE.md` and the stray file deleted as part of this run.
 - If a root `CLAUDE.md` exists AND does NOT contain the phrase "Context not yet generated", treat it as real content: show it and ask "Context already exists — regenerate everything, update a specific file, or add a new domain?" A stub created by `harness.sh` always contains that phrase — skip the prompt and proceed directly to Phase 1.
 - If the project has no manifest from 1.1 and no recognized structure, say so and ask what stack they're using before scanning further.

@@ -16,7 +16,7 @@ Do not provide any other information until the user asks a question.
 
 How to write Swift the way the language wants to be written, current through Swift 6.4.
 
-**Toolchain baseline: Swift 6.3** (current release as of August 2026). Everything here compiles on 6.3 unless marked ⚠, which flags unreleased Swift 6.4 features. Concurrency guidance assumes the Swift 6.2 model — if the project is on 6.1 or earlier, §3's rules about `async` and `@concurrent` do not apply.
+**Toolchain baseline: Swift 6.2.** Everything here compiles on 6.2 unless it names a later version: advice tagged 6.3 needs that toolchain, and ⚠ flags unreleased Swift 6.4 features. Before applying any of it, read the project's real version (`SWIFT_VERSION` in `project.yml` or the xcconfig, `swift-tools-version` in `Package.swift`) and its default actor isolation, and skip advice that needs a newer version or setting. Concurrency guidance assumes the Swift 6.2 model: if the project is on 6.1 or earlier, the rules in section 3 about `async` and `@concurrent` do not apply.
 
 The through-line: **Swift is a progressive-disclosure language. Start with the simplest, most static, most single-threaded thing that works, and buy dynamism — concurrency, reference semantics, existentials, unsafe pointers — only where you can point at the reason.** Every rule below is an application of that.
 
