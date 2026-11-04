@@ -8,10 +8,13 @@ description: >
   proposes one diff per file for the user to approve. Context files stay the source
   of truth; engram is the inbox. Use when the user says "context-sync", "sync the
   context", "sincroniza el contexto", "pasa lo de engram a los docs", or after a
-  ticket closes. Writes nothing without approval.
-version: "1.1.0"
+  ticket closes. With `audit [Nw]` it reads the code committed in the last N weeks
+  instead of engram and proposes the code shapes that repeat as anti-patterns; use it
+  for "audit the generated code", "audita lo de las últimas semanas", "slop audit".
+  Writes nothing without approval.
+version: "1.2.0"
 modes: [architect]
-argument-hint: "[project] [--since YYYY-MM-DD]"
+argument-hint: "[project] [--since YYYY-MM-DD] | audit [Nw]"
 ---
 
 # Context Sync
@@ -28,6 +31,8 @@ the user, never an automatic overwrite.
 
 What the user typed after `/context-sync`: `$ARGUMENTS`. A project name overrides
 the one engram resolves from the cwd. `--since` overrides the last-sync date.
+`audit` switches the input from engram to the code: Phase 2 becomes "Phase 2 (audit
+mode)" below, Phases 3 and 4 run as written, and Phase 5 is skipped.
 
 ---
 
@@ -81,6 +86,35 @@ is nothing to sync into.
 
 More than 60 candidates? Tell the user the count and offer to split the run by
 type or by month. Do not skim.
+
+## Phase 2 (audit mode): Collect repeated shapes from the code
+
+Window: the `Nw` after `audit` (`audit 6w`), default 4 weeks.
+
+1. List what changed in the window on the default branch, without merges, lockfiles,
+   generated code or vendored code:
+
+   ```bash
+   git log --since="<N> weeks ago" --no-merges --format='%h %s' <default-branch>
+   git log --since="<N> weeks ago" --no-merges -p <default-branch> -- . \
+     ':!*.lock' ':!*lock.json' ':!**/Migrations/**' ':!**/generated/**'
+   ```
+
+2. Read the added lines and hunt the slop shapes: an abstraction with one implementation
+   or one caller, a layer that only forwards, a catch that only rethrows or logs, a check
+   for a case that cannot happen, a generic name (`*Manager`, `*Helper`, `*Utils`), a
+   comment that restates the line below it, a hand-rolled version of what the stdlib, the
+   framework or a `## Copy these` exemplar already does. Also every line the project's
+   `## Anti-patterns`, `.claude/rules/`, `~/.claude/rules/` or
+   `~/.claude/reference/anti-patterns/<stack>.md` already forbid.
+3. Keep a shape only when it appears in 2 or more files. A one-off is a review
+   finding, not a pattern. Each candidate carries every `file:line` and commit where it
+   appears.
+4. A shape a rule already forbids is not new: classify it as `covered`, and in Phase 4
+   say the rule is being ignored and propose the automated check from Phase 3 instead
+   of a second prose line.
+
+Nothing repeats? Report `No repeated shapes in the last <N> weeks.` and stop.
 
 ## Phase 3: Classify each fact
 
@@ -154,6 +188,9 @@ rules forbid editing a file (team-owned, tracked), do not edit it. Offer the cha
 as a ready-to-paste block for a PR, or write it to the local file those rules name.
 
 ## Phase 5: Record the run
+
+Skipped in audit mode: the window is the state, and the engram state note tracks engram
+ids only.
 
 Save the state with `mem_save` so the next run starts where this one ended:
 

@@ -98,7 +98,7 @@ The **Origin** column is detailed in [Credits and sources](#credits-and-sources)
 | **pr-body** | all | Writes a PR title and body: sections, length and writing rules | Own |
 | **prd-to-github-backlog** | all | PRD to GitHub Project: epics, vertical-slice (`fullstack`) stories, tasks per area, sprints, estimates | Own |
 | **fill-context** | all | Scans the codebase and interviews you to write the `.claude/` context tree | Own |
-| **context-sync** | all | Proposes moving the engram notes saved since the last run into the `.claude/` context files, one approved diff per file | Own |
+| **context-sync** | all | Proposes moving the engram notes saved since the last run into the `.claude/` context files, one approved diff per file; `audit [Nw]` proposes code shapes repeated in recent commits as anti-patterns | Own |
 | **prompt-rewrite** | all | Audits a skill, agent or prompt against Anthropic's prompting docs | Adapted |
 | **tdd** | all | Red-green-refactor loop | mattpocock/skills |
 | **diagnose** | all | Reproduce, minimise, hypothesise, instrument, fix, regression-test | mattpocock/skills |
