@@ -77,7 +77,8 @@ Story (`FS-` ID) must work from the UI against the real backend.
 Find the context index: `CLAUDE.md` at the repo root, else `AGENTS.md`, else the
 parent directory's `CLAUDE.md` (hub). Read it and the files it links
 under Engineering and Business, mainly `engineering/standards.md`,
-`engineering/testing.md`, `business/rules.md`.
+`engineering/testing.md`, `business/rules.md`. Read every `.claude/rules/*.md` too: its
+`## Copy these` exemplars are the shape a new file must follow.
 
 ## 4. Run the tests
 
