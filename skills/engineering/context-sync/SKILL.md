@@ -9,7 +9,7 @@ description: >
   of truth; engram is the inbox. Use when the user says "context-sync", "sync the
   context", "sincroniza el contexto", "pasa lo de engram a los docs", or after a
   ticket closes. Writes nothing without approval.
-version: "1.0.0"
+version: "1.1.0"
 modes: [architect]
 argument-hint: "[project] [--since YYYY-MM-DD]"
 ---
@@ -119,6 +119,14 @@ match it, reference material to `engineering/standards.md`, external services to
 `architecture/integrations.md`, a workflow gotcha to the skill that runs that
 workflow. When no file fits, propose the section to add instead of inventing a new
 file.
+
+Before promoting a code shape (an `Anti-pattern:` note or a rule line), check whether a
+tool the project already runs can catch it: a rule in its existing lint config
+(ESLint `no-restricted-imports`, detekt, SwiftLint, .NET analyzers in `.editorconfig`), or
+an architecture test when the library is already installed (NetArchTest, Konsist,
+ArchUnit). If one can, propose that check (config diff or test) instead of the prose
+line; it does not spend the 10-line budget. A linter or test library the project does
+not have yet is a new dependency: name it and wait for approval.
 
 ## Phase 4: Propose, then apply what is approved
 
