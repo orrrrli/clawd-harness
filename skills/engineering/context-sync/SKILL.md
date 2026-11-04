@@ -8,17 +8,20 @@ description: >
   proposes one diff per file for the user to approve. Context files stay the source
   of truth; engram is the inbox. Use when the user says "context-sync", "sync the
   context", "sincroniza el contexto", "pasa lo de engram a los docs", or after a
-  ticket closes. Writes nothing without approval.
-version: "1.0.0"
+  ticket closes. With `audit [Nw]` it reads the code committed in the last N weeks
+  instead of engram and proposes the code shapes that repeat as anti-patterns; use it
+  for "audit the generated code", "audita lo de las últimas semanas", "slop audit".
+  Writes nothing without approval.
+version: "1.2.0"
 modes: [architect]
-argument-hint: "[project] [--since YYYY-MM-DD]"
+argument-hint: "[project] [--since YYYY-MM-DD] | audit [Nw]"
 ---
 
 # Context Sync
 
 engram collects decisions as they happen. The context files (`CLAUDE.md` and the
 `.claude/` tree that `fill-context` builds) are what agents are told to trust, and
-what `test-writer` and `business-analyst` read instead of engram. Without a sync
+what `business-analyst` reads instead of engram. Without a sync
 step the files go stale and the real rules live only in memory, in several
 versions. This skill moves the durable ones into the files, with the user deciding
 each one.
@@ -28,6 +31,8 @@ the user, never an automatic overwrite.
 
 What the user typed after `/context-sync`: `$ARGUMENTS`. A project name overrides
 the one engram resolves from the cwd. `--since` overrides the last-sync date.
+`audit` switches the input from engram to the code: Phase 2 becomes "Phase 2 (audit
+mode)" below, Phases 3 and 4 run as written, and Phase 5 is skipped.
 
 ---
 
@@ -82,6 +87,35 @@ is nothing to sync into.
 More than 60 candidates? Tell the user the count and offer to split the run by
 type or by month. Do not skim.
 
+## Phase 2 (audit mode): Collect repeated shapes from the code
+
+Window: the `Nw` after `audit` (`audit 6w`), default 4 weeks.
+
+1. List what changed in the window on the default branch, without merges, lockfiles,
+   generated code or vendored code:
+
+   ```bash
+   git log --since="<N> weeks ago" --no-merges --format='%h %s' <default-branch>
+   git log --since="<N> weeks ago" --no-merges -p <default-branch> -- . \
+     ':!*.lock' ':!*lock.json' ':!**/Migrations/**' ':!**/generated/**'
+   ```
+
+2. Read the added lines and hunt the slop shapes: an abstraction with one implementation
+   or one caller, a layer that only forwards, a catch that only rethrows or logs, a check
+   for a case that cannot happen, a generic name (`*Manager`, `*Helper`, `*Utils`), a
+   comment that restates the line below it, a hand-rolled version of what the stdlib, the
+   framework or a `## Copy these` exemplar already does. Also every line the project's
+   `## Anti-patterns`, `.claude/rules/`, `~/.claude/rules/` or
+   `~/.claude/reference/anti-patterns/<stack>.md` already forbid.
+3. Keep a shape only when it appears in 2 or more files. A one-off is a review
+   finding, not a pattern. Each candidate carries every `file:line` and commit where it
+   appears.
+4. A shape a rule already forbids is not new: classify it as `covered`, and in Phase 4
+   say the rule is being ignored and propose the automated check from Phase 3 instead
+   of a second prose line.
+
+Nothing repeats? Report `No repeated shapes in the last <N> weeks.` and stop.
+
 ## Phase 3: Classify each fact
 
 A note often holds several facts: one is already documented, another is new, a
@@ -110,11 +144,23 @@ plan, anything the code or git history already shows.
 Pick the target from the tree's own split: business rules to `business/rules.md`,
 testing to `engineering/testing.md`, an entity's behavior to `domains/<entity>.md`,
 a code trap or convention tied to one kind of file (Kotlin services, Swift views,
-migrations) to the `.claude/rules/` file whose `paths` match it, cross-cutting
-conventions to `engineering/standards.md`, external services to
+migrations) to the `.claude/rules/` file whose `paths` match it, a cross-cutting
+code shape Claude must never write (every note titled `Anti-pattern:` is one, unless it
+is tied to one kind of file) to the root `CLAUDE.md` `## Anti-patterns` (hard
+budget of 10 lines: a new line displaces the weakest, and the proposal says which),
+an exemplar file to the `## Copy these` section of the `.claude/rules/` file whose `paths`
+match it, reference material to `engineering/standards.md`, external services to
 `architecture/integrations.md`, a workflow gotcha to the skill that runs that
 workflow. When no file fits, propose the section to add instead of inventing a new
 file.
+
+Before promoting a code shape (an `Anti-pattern:` note or a rule line), check whether a
+tool the project already runs can catch it: a rule in its existing lint config
+(ESLint `no-restricted-imports`, detekt, SwiftLint, .NET analyzers in `.editorconfig`), or
+an architecture test when the library is already installed (NetArchTest, Konsist,
+ArchUnit). If one can, propose that check (config diff or test) instead of the prose
+line; it does not spend the 10-line budget. A linter or test library the project does
+not have yet is a new dependency: name it and wait for approval.
 
 ## Phase 4: Propose, then apply what is approved
 
@@ -142,6 +188,9 @@ rules forbid editing a file (team-owned, tracked), do not edit it. Offer the cha
 as a ready-to-paste block for a PR, or write it to the local file those rules name.
 
 ## Phase 5: Record the run
+
+Skipped in audit mode: the window is the state, and the engram state note tracks engram
+ids only.
 
 Save the state with `mem_save` so the next run starts where this one ended:
 

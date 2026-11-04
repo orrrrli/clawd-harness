@@ -20,7 +20,3 @@ Remove instrumentation before finishing.
 Before reproducing, call `mem_search` with `match_mode: "any"` and the failing area (module, symptom, file names). A past root cause is a hypothesis to test first, not a conclusion. Memory can be stale.
 
 Once the fix is confirmed, call `mem_save` with the root cause when it can bite again, such as a shared function, a framework gotcha, or a misleading symptom. Use `type: bugfix`, fill What/Why/Where/Learned (symptom, cause, fix, how you proved it), and set a `topic_key` naming the root cause (`bug/<slug>`). Don't save a one-off typo, and don't save an unconfirmed hypothesis.
-
-A save with an existing `topic_key` overwrites that observation, and `mem_search` only returns previews. Before saving under an existing key, read the full entry with `mem_get_observation`. Keep every fact it has unless you re-verified that fact as false in this run; then write "Corrected: <old> -> <new>, <file:line>". Otherwise use a new key.
-
-Don't `cd` in Bash. engram binds to the session's working directory and denies saves after a `cd`. Use absolute paths and `git -C`.

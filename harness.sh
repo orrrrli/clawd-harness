@@ -4,7 +4,7 @@
 #   harness.sh [dir] [--stack=all|web|dotnet|android|ios[,...]]   set up a project
 #   harness.sh [dir] --update [--stack=...]                        relink a project's skills only
 #   harness.sh --global                                            user-level setup, once per machine
-#   harness.sh --global --update                                   relink agents, behavior, skills, statusline only
+#   harness.sh --global --update                                   relink agents, rules, behavior, skills, statusline only
 #
 # A project remembers its stacks in .claude/harness-stack, so --update needs no
 # --stack after the first run. Every mode is safe to re-run.
@@ -51,22 +51,31 @@ GLOBAL_SKILLS=(
     productivity/handoff
 )
 
-# Links agents, behavior, global skills and the statusline script. Touches no settings.
-global_links() {
-    local src="$STACK_DIR/global/agents" agents="$CLAUDE_DIR/agents" backup s dest linked=0
-
-    # Agents: ~/.claude/agents -> global/agents (a real directory is backed up, never deleted)
-    if [ -L "$agents" ] && [ "$(readlink "$agents")" = "$src" ]; then
-        echo "agents: already linked"
-    else
-        if [ -e "$agents" ] && [ ! -L "$agents" ]; then
-            backup="$agents.bak-$(date +%Y%m%d-%H%M%S)"
-            mv "$agents" "$backup"
-            echo "agents: existing directory moved to $backup"
-        fi
-        ln -sfn "$src" "$agents"
-        echo "agents: $agents -> $src"
+# Links ~/.claude/<name> -> global/<name>. A real directory is backed up, never deleted.
+link_global_dir() {
+    local name="$1" src="$STACK_DIR/global/$1" dest="$CLAUDE_DIR/$1" backup
+    if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src" ]; then
+        echo "$name: already linked"
+        return
     fi
+    if [ -e "$dest" ] && [ ! -L "$dest" ]; then
+        backup="$dest.bak-$(date +%Y%m%d-%H%M%S)"
+        mv "$dest" "$backup"
+        echo "$name: existing directory moved to $backup"
+    fi
+    ln -sfn "$src" "$dest"
+    echo "$name: $dest -> $src"
+}
+
+# Links agents, rules, behavior, global skills and the statusline script. Touches no settings.
+global_links() {
+    local s dest linked=0
+
+    link_global_dir agents
+    # Rules: path-scoped anti-patterns per stack, loaded when a matching file is read
+    link_global_dir rules
+    # Reference: full anti-pattern catalogs per stack, read only by code-reviewer
+    link_global_dir reference
 
     # Behavior rules: ~/.claude/behavior.md -> global/behavior.md (a real file is backed up).
     # CLAUDE.md loads it with an `@behavior.md` line; personal identity stays in persona.md.

@@ -57,8 +57,7 @@ git diff <BASE>...HEAD         # committed on this branch
 ```
 
 If `$ARGUMENTS` carries `--since <sha>`, review `git diff <sha>`: everything
-committed after that SHA plus the uncommitted work (spec-apply passes the commit
-before the Story's red tests, so the tests are reviewed with their implementation).
+committed after that SHA plus the uncommitted work.
 Otherwise, if the working tree has changes, review those (the work in progress). If it is
 clean, review `<BASE>...HEAD`. Read every changed file in full, not only the hunks.
 
@@ -75,10 +74,11 @@ Story (`FS-` ID) must work from the UI against the real backend.
 
 ## 3. Load the project's rules
 
-Find the context index: `CLAUDE.md` at the repo root, else `.claude/CLAUDE.md`,
-else the parent directory's `.claude/` (monorepo). Read it and the files it links
+Find the context index: `CLAUDE.md` at the repo root, else `AGENTS.md`, else the
+parent directory's `CLAUDE.md` (hub). Read it and the files it links
 under Engineering and Business, mainly `engineering/standards.md`,
-`engineering/testing.md`, `business/rules.md`.
+`engineering/testing.md`, `business/rules.md`. Read every `.claude/rules/*.md` too: its
+`## Copy these` exemplars are the shape a new file must follow.
 
 ## 4. Run the tests
 
@@ -90,8 +90,7 @@ work (simulators, JVM backends), so nothing that needs the running stack is star
 - Mark each criterion that only they can prove `~ DEFERRED (light mode: <e2e |
   browser check> not run)`. A criterion another test already proves keeps its
   normal verdict.
-- Unit, component and integration tests that need no running stack still run,
-  and so does the mutation check.
+- Unit, component and integration tests that need no running stack still run.
 
 Use the commands from `engineering/testing.md`; otherwise the project's own
 (`npm test`, `pnpm test`, `dotnet test`, `./gradlew test`). Record what actually
@@ -105,24 +104,11 @@ Never stash or touch the real working tree: other reviewers read it in
 parallel. Failures that already exist on the base are reported as
 **pre-existing** and do not count toward the verdict.
 
-### Mutation check
-
-For each in-scope criterion with a passing test, prove the test catches a fault:
-
-1. Build a scratch worktree with the change applied: `git worktree add --detach
-   "$(mktemp -d)" HEAD`, then copy into it every file from
-   `git ls-files -m -o --exclude-standard` (committed work: use HEAD as is).
-2. Break the line that implements the criterion, once: invert a condition, shift a
-   boundary (`>` to `>=`), drop a guard, or return a default.
-3. Run only that criterion's test. Red = the test detects the fault. Green = it does not.
-4. `git worktree remove` it. Never mutate the real working tree.
-
-One mutation per criterion. Do not hunt for exotic mutations.
-
-Rely on the project's existing tests. Do not build your own harness (scratch
-apps, ad-hoc HTTP clients, containers) unless an in-scope criterion has no test
-at all; then the smallest check that proves it. The browser check below is
-the one exception.
+Rely on the project's existing tests. Do not require new ones. Do not build
+your own harness (scratch apps, ad-hoc HTTP clients, containers). A criterion no
+test covers is proven by tracing its code path from the product's entry point
+(API route, UI handler) to the line that does it. The browser check below is the
+one exception.
 
 ### Browser check (web projects only)
 
@@ -165,18 +151,11 @@ the criterion failing, it is ✗ regardless of what the tests say.
 
 - **Spec 1, acceptance criteria:** only the criteria this change is due to
   satisfy. Check behavior, not that some code exists for it.
-  ✓ = a test exercises the behavior (at any layer), passes, and fails under the
-  mutation check.
-  ~ PARTIAL = the code does it but no test proves it, or the test stays green
-  under the mutation (it does not detect the fault).
-  A layer the AC names but no test covers (e.g. the HTTP status) is a minor
-  finding, not a downgrade.
-- **Spec 2, code quality** (in-scope lines only): duplication, naming,
-  architecture boundaries, control flow, error handling, function size, dead
-  code, tests that exercise the real path instead of a mock of it, and tests
+  ✓ = an existing test exercises the behavior and passes, the code path is traced
+  from the entry point with file:line, or the browser check confirmed it.
+  A criterion with no test is not a finding.
+- **Spec 2, code quality** (in-scope lines only): your agent's list, plus tests
   that seed state the product's own entry points cannot produce.
-
-Write the reasoning before each verdict.
 
 ## 6. Report
 
@@ -184,7 +163,6 @@ Write the reasoning before each verdict.
 VERDICT: PASS | PASS (DEFERRED) | FAIL   <ID> — <title>   (Story #<n>)
 Mode: light | full
 Tests: <command> → <result>   [pre-existing failures: <list or none>]
-Mutation: AC1 <mutation> → red | AC2 <mutation> → GREEN (survived)
 
 Acceptance criteria
   ✓ AC1 <criterion>: <evidence, file:line>

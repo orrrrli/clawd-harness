@@ -158,7 +158,7 @@ dotnet test tests/Api.Tests
 ```
 
 ```bash
-cd apps/mobile && npx expo start   # or the repo's existing mobile run command
+(cd apps/mobile && npx expo start)   # or the repo's existing mobile run command
 ```
 
 Report the result of each command. If something fails, fix it within this

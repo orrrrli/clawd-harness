@@ -78,7 +78,8 @@ Avoid these patterns. Fix shown after →
 
 ## Behavior Rules
 
-- Never add "Co-Authored-By" or AI attribution to commits. Use conventional commits only.
+- Never add "Co-Authored-By" or AI attribution to commits. Use conventional commits, or the
+  ticket-first format (`OG-4703: ...`) where the repo uses it.
 - Commit messages are the subject line only (`fix(PROJ-123): Short imperative summary`). No body:
   the why goes in the PR description, not the commit.
 - CLI: prefer the commands `rtk` proxies, so the rtk hook can compact their output:
@@ -110,24 +111,31 @@ Two stores, split by what the note is about. Never save a note to both.
   in every repo. Never `project` or `reference` notes.
 - engram: everything tied to one project: decisions, bugs, patterns, discoveries, ticket state.
   A correction that only applies to one repo goes here too, under that project.
+- When I correct a code shape you generated, save it to engram that turn: type `pattern`, title
+  `Anti-pattern: <shape>`, what you wrote, what I wanted, `file:line`. One that holds in every
+  repo goes to `global/rules/<stack>.md` in clawd-harness instead; propose the line.
 - This section decides where a note goes. engram's protocol decides when to save, except in a
   task the user marked read-only.
+- A save with an existing `topic_key` overwrites that observation, and `mem_search` only returns
+  previews. Before saving under an existing key, read the full entry with `mem_get_observation`.
+  Keep every fact it has unless you re-verified that fact as false in this run; then write
+  "Corrected: <old> -> <new>, <file:line>". Never rewrite a remembered fact from memory. Otherwise
+  use a new key.
 - Never save what CLAUDE.md, a rule or the code already says.
 
 ## Never Do
 
-- Never use `any` in TypeScript
 - Never commit `.env` files or hardcode secrets
-- Never use `console.log` in production
-- Never throw exceptions for expected business logic errors in .NET
-- Never skip input validation on API endpoints
+- Never use `any` in TypeScript, in any file or snippet (`.ts`, `.vue`, `.astro`, a plan, a PR). Use `unknown` and narrow it
+- Code anti-patterns live in `~/.claude/rules/` (code, web, dotnet, ios, kotlin-spring) and load with matching files
 
 ## Code work
 
 Applies to code sessions (software-architect and its subagents). A `ui-designer`
 session follows its own agent rules on these points instead.
 
-- Never build after changes unless explicitly asked.
+- Never build after changes unless explicitly asked. Reviewers and skill gates run the project's
+  own build and tests.
 - Before modifying ANY file: first locate the relevant code, tell the user the exact file path and
   line number where you found it, and explain what you see. Then STOP and wait for confirmation
   before making any change. An approval gate in a skill counts as that confirmation for the work
@@ -136,8 +144,5 @@ session follows its own agent rules on these points instead.
   STOP. Ask ONE focused question. Wait for confirmation. Never assume. Never guess.
 - The STOP rules in this file bind the main session. Subagents cannot ask or wait: they follow
   their dispatch prompt and state their assumptions in the report.
-- Use guard clauses and early returns. Never nest conditionals more than 2 levels deep.
-- Never swallow an error: no catch that only logs or ignores. Handle it, or return or propagate it
-  to the layer that can.
 - Before a large architecture change, a heavy dependency, or a new table: read the root CLAUDE.md
   and the .claude/ files it links for that area. Then ask.

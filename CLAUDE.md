@@ -7,15 +7,18 @@ them into a project. There is no application here — it is markdown and bash.
 
 ```
 skills/<category>/<name>/SKILL.md   21 skills across 3 categories
-global/agents/<name>.md             7-agent team, user-level (all projects)
+global/agents/<name>.md             6-agent team, user-level (all projects)
 harness.sh                          the only installer: project setup (--stack aware), --global, --update
+global/rules/<stack>.md             path-scoped code anti-patterns (code, web, dotnet, ios, kotlin-spring), linked as ~/.claude/rules by harness.sh --global; 10-line budget each
+global/reference/anti-patterns/     full per-stack catalogs, linked as ~/.claude/reference; read only by code-reviewer, never loaded into sessions
 global/behavior.md                  how the agent writes and acts (no personal data), linked as ~/.claude/behavior.md by harness.sh --global
-global/statusline-command.sh        statusline, linked by harness.sh --global
+global/statusline-command.sh        fallback statusline, linked by harness.sh --global, used only when none is configured
 global/permissions.json             guardrail deny/ask rules, merged into ~/.claude/settings.json by harness.sh --global
 global/build-cloud-setup.sh         prints the claude.ai/code environment setup script; output holds personal files, never commit it
 global/githooks/commit-msg          commit message hook; repos point at it via core.hooksPath, never copied
 global/githooks/post-checkout       on `git worktree add`, symlinks the ignored Claude harness and .env* files from the main checkout
-global/claude-hooks/<name>.sh       optional Claude Code hooks; settings point at them, never copied, nothing installs them```
+global/claude-hooks/<name>.sh       optional Claude Code hooks; settings point at them, never copied, nothing installs them
+```
 
 Each skill is symlinked into a target project as `.claude/skills/<skill>` by `harness.sh`. There are no per-project agents.
 
