@@ -227,6 +227,11 @@ the checklist resolved in Phase 0.
 
 **Goal:** Define the approach for the whole Story before writing code.
 
+Start with the riskiest decision in the Story (data shape, where a responsibility lives, a
+contract other code will depend on). Give 2 or 3 real approaches for it, each with its
+tradeoff, and recommend one. If only one approach fits the codebase, say so in one line and
+why; never invent alternatives to fill the slot. The plan below builds on the recommended one.
+
 Produce one implementation plan, with a section per layer touched (db, backend, frontend):
 - **The contract** between layers, when the Story crosses one: route and method, request and
   response shapes (field names and types), status codes and the error shape. The code in
