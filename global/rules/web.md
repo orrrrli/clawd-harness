@@ -17,3 +17,4 @@ Shapes you would otherwise write. Budget: 10 lines; a new one displaces the weak
 - Never hand-roll a modal (`fixed inset-0` div + backdrop `onClick`). Use the project's Dialog primitive or `<dialog>`, and give icon-only buttons an `aria-label`.
 - (Zustand) Never destructure the whole store (`const { a } = useStore()`). Select a slice: `useStore(s => s.a)`.
 - Never compute money with floats and `toFixed`. Use integer cents.
+- Never show the error of a write made inside an open modal only in a toast. The modal aria-hides the page and its overlay can cover the toast; keep the error inside the modal.

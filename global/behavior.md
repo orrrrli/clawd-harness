@@ -88,6 +88,8 @@ Avoid these patterns. Fix shown after →
   line numbers and paths the shell path loses.
   Do NOT use `bat`, `fd` or `eza` — rtk does not proxy them, so their full output lands in context.
   `rg` is preferred over `grep`; `sd` is fine for edits (rtk covers neither `sed` nor `sd`).
+- Browser work (testing a change, demos, evidence, screenshots) runs in ego-browser: load the
+  `ego-browser` skill first. Never use the Claude in Chrome extension; if ego fails, stop and ask.
 - Never `cd` in Bash; use absolute paths (`rg <pattern> /abs/path`, `git -C /abs/repo`).
   A `cd` moves the session's working directory, engram then resolves a different project
   from it, and every `mem_*` write is denied with `session_project_conflict`.
